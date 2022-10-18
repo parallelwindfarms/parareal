@@ -17,6 +17,7 @@ import numpy as np
 from pathlib import Path
 from dataclasses import dataclass, field
 from typing import (Union, Callable, Optional, Any, Iterator)
+import logging
 
 <<example-mpi-imports>>
 <<vector-expressions>>
@@ -51,18 +52,6 @@ if __name__ == "__main__":
     argh.dispatch_command(main)
 ```
 
-## Dask with MPI
-There are two modes in which we may run Dask with MPI. One with a `dask-mpi` running as external scheduler, the other running everything as a single script. For this example we opt for the second, straight from the dask-mpi documentation:
-
-``` {.python #example-mpi-imports}
-from dask_mpi import initialize  # type: ignore
-from dask.distributed import Client  # type: ignore
-```
-
-``` {.python #example-mpi-main}
-initialize()
-client = Client()
-```
 
 ## Vector Arithmetic Expressions
 ### Abstract vectors
@@ -181,24 +170,10 @@ class LiteralExpr(Vector):
         return self.value
 ```
 
-## Running the harmonic oscillator
+## The coarse and fine solvers
+The API of `parareal` expects us to specify a solver with a function of three arguments, `y0`, `t0` and `t1`. For this function, we need the model input parameters to be in scope. Not only that, the scope needs to be completely serialised using `pickle`. For this reason, it is not enough to have a closure. We need to define a dataclass with a single `solution` method.
 
-``` {.python #example-mpi-imports}
-from parareal.futures import (Parareal)
-
-from parareal.forward_euler import forward_euler
-# from pintFoam.parareal.iterate_solution import iterate_solution
-from parareal.tabulate_solution import tabulate
-from parareal.harmonic_oscillator import (underdamped_solution, harmonic_oscillator)
-
-import math
-# from uuid import uuid4
-import logging
-```
-
-``` {.python #example-mpi-main}
-system = harmonic_oscillator(OMEGA0, ZETA)
-```
+The `Coarse` solution is not explicitely archived. We let `dask` handle the propagation of the result to further computations.
 
 ``` {.python #example-mpi-coarse}
 @dataclass
@@ -211,6 +186,8 @@ class Coarse:
         logging.debug(f"coarse result: {y} {reduce_expr(y)} {t0} {t1} {a}")
         return a
 ```
+
+For the `fine` integrator however, we want to save the complete result, so that we can retrieve the full history after the computation has finished. So, instead of a `LiteralExpr`, the fine integrator returns a `H5Snap`.
 
 ``` {.python #example-mpi-fine}
 def generate_filename(name: str, n_iter: int, t0: float, t1: float) -> str:
@@ -245,16 +222,8 @@ class Fine:
         return H5Snap(path, "data", index[-1])
 ```
 
-``` {.python #example-mpi-main}
-y0 = np.array([1.0, 0.0])
-t = np.linspace(0.0, 15.0, 20)
-archive = Path("./output/euler")
-underdamped_solution(OMEGA0, ZETA)(t)
-tabulate(Fine(archive, "fine", 0, system, H).solution, LiteralExpr(y0), t)
-
-# euler_files = archive.glob("*.h5")
-```
-
+## Keeping track of convergence
+We want to cancel any scheduled computations as soon has we are happy that parareal has converged. This means we need to keep track of the results coming in, and check for convergence. This is done in the `History` class.
 
 ``` {.python #example-mpi-history}
 @dataclass
@@ -277,6 +246,45 @@ class History:
         return converged
 ```
 
+### Dask with MPI
+There are two modes in which we may run Dask with MPI. One with a `dask-mpi` running as external scheduler, the other running everything as a single script. For this example we opt for the second, straight from the dask-mpi documentation:
+
+``` {.python #example-mpi-imports}
+import dask
+# from dask_mpi import initialize  # type: ignore
+from dask.distributed import Client  # type: ignore
+```
+
+``` {.python #example-mpi-main}
+# initialize()
+client = Client(n_workers=4, threads_per_worker=1)
+```
+
+## Running the harmonic oscillator
+
+``` {.python #example-mpi-imports}
+from parareal.futures import (Parareal)
+
+from parareal.forward_euler import forward_euler
+from parareal.tabulate_solution import tabulate
+from parareal.harmonic_oscillator import (underdamped_solution, harmonic_oscillator)
+
+import math
+```
+
+For reference, we also run the full integrator using just the `Fine` solution.
+
+``` {.python #example-mpi-main}
+system = harmonic_oscillator(OMEGA0, ZETA)
+y0 = np.array([1.0, 0.0])
+t = np.linspace(0.0, 15.0, 20)
+archive = Path("./output/euler")
+tabulate(Fine(archive, "fine", 0, system, H).solution, LiteralExpr(y0), t)
+```
+
+
+### Running parareal
+
 ``` {.python #example-mpi-main}
 archive = Path("./output/parareal")
 p = Parareal(
@@ -286,5 +294,7 @@ p = Parareal(
 jobs = p.schedule(LiteralExpr(y0), t)
 history = History(archive)
 p.wait(jobs, history.convergence_test)
+
+client.shutdown()
 ```
 

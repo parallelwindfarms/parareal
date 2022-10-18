@@ -619,7 +619,7 @@
 <span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>        result <span class="op">=</span> <span class="va">self</span>.client.gather(jobs[i])</span>
 <span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> convergence_test(result):</span>
 <span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a>            <span class="cf">for</span> j <span class="kw">in</span> jobs[i<span class="op">+</span><span class="dv">1</span>:]:</span>
-<span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a>                <span class="va">self</span>.client.cancel(j)</span>
+<span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a>                <span class="va">self</span>.client.cancel(j, force<span class="op">=</span><span class="va">True</span>)</span>
 <span id="cb29-7"><a href="#cb29-7" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span> result</span>
 <span id="cb29-8"><a href="#cb29-8" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> result</span></code></pre></div>
 </div>
@@ -702,52 +702,39 @@
 <span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
 <span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> dataclasses <span class="im">import</span> dataclass, field</span>
 <span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> typing <span class="im">import</span> (Union, Callable, Optional, Any, Iterator)</span>
-<span id="cb31-7"><a href="#cb31-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-8"><a href="#cb31-8" aria-hidden="true" tabindex="-1"></a><span class="op">&lt;&lt;</span>example<span class="op">-</span>mpi<span class="op">-</span>imports<span class="op">&gt;&gt;</span></span>
-<span id="cb31-9"><a href="#cb31-9" aria-hidden="true" tabindex="-1"></a><span class="op">&lt;&lt;</span>vector<span class="op">-</span>expressions<span class="op">&gt;&gt;</span></span>
-<span id="cb31-10"><a href="#cb31-10" aria-hidden="true" tabindex="-1"></a><span class="op">&lt;&lt;</span>example<span class="op">-</span>mpi<span class="op">-</span>coarse<span class="op">&gt;&gt;</span></span>
-<span id="cb31-11"><a href="#cb31-11" aria-hidden="true" tabindex="-1"></a><span class="op">&lt;&lt;</span>example<span class="op">-</span>mpi<span class="op">-</span>fine<span class="op">&gt;&gt;</span></span>
-<span id="cb31-12"><a href="#cb31-12" aria-hidden="true" tabindex="-1"></a><span class="op">&lt;&lt;</span>example<span class="op">-</span>mpi<span class="op">-</span>history<span class="op">&gt;&gt;</span></span>
-<span id="cb31-13"><a href="#cb31-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-14"><a href="#cb31-14" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> get_data(files: <span class="bu">list</span>[Path]) <span class="op">-&gt;</span> Iterator[np.ndarray]:</span>
-<span id="cb31-15"><a href="#cb31-15" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> n <span class="kw">in</span> files:</span>
-<span id="cb31-16"><a href="#cb31-16" aria-hidden="true" tabindex="-1"></a>        <span class="cf">with</span> h5.File(n, <span class="st">&quot;r&quot;</span>) <span class="im">as</span> f:</span>
-<span id="cb31-17"><a href="#cb31-17" aria-hidden="true" tabindex="-1"></a>            <span class="cf">yield</span> f[<span class="st">&quot;data&quot;</span>][:]</span>
-<span id="cb31-18"><a href="#cb31-18" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-19"><a href="#cb31-19" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> combine_fine_data(files: <span class="bu">list</span>[Path]) <span class="op">-&gt;</span> np.ndarray:</span>
-<span id="cb31-20"><a href="#cb31-20" aria-hidden="true" tabindex="-1"></a>    data <span class="op">=</span> get_data(files)</span>
-<span id="cb31-21"><a href="#cb31-21" aria-hidden="true" tabindex="-1"></a>    first <span class="op">=</span> <span class="bu">next</span>(data)</span>
-<span id="cb31-22"><a href="#cb31-22" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> np.concatenate([first] <span class="op">+</span> [x[<span class="dv">1</span>:] <span class="cf">for</span> x <span class="kw">in</span> data], axis<span class="op">=</span><span class="dv">0</span>)</span>
-<span id="cb31-23"><a href="#cb31-23" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-24"><a href="#cb31-24" aria-hidden="true" tabindex="-1"></a><span class="co"># def list_files(path: Path) -&gt; list[Path]:</span></span>
-<span id="cb31-25"><a href="#cb31-25" aria-hidden="true" tabindex="-1"></a><span class="co">#     all_files = path.glob(&quot;*.h5&quot;)</span></span>
-<span id="cb31-26"><a href="#cb31-26" aria-hidden="true" tabindex="-1"></a><span class="co">#     return []</span></span>
-<span id="cb31-27"><a href="#cb31-27" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-28"><a href="#cb31-28" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> main(log: <span class="bu">str</span> <span class="op">=</span> <span class="st">&quot;WARNING&quot;</span>, log_file: Optional[<span class="bu">str</span>] <span class="op">=</span> <span class="va">None</span>,</span>
-<span id="cb31-29"><a href="#cb31-29" aria-hidden="true" tabindex="-1"></a>         OMEGA0<span class="op">=</span><span class="fl">1.0</span>, ZETA<span class="op">=</span><span class="fl">0.5</span>, H<span class="op">=</span><span class="fl">0.01</span>):</span>
-<span id="cb31-30"><a href="#cb31-30" aria-hidden="true" tabindex="-1"></a>    <span class="co">&quot;&quot;&quot;Run model of dampened hormonic oscillator in Dask&quot;&quot;&quot;</span></span>
-<span id="cb31-31"><a href="#cb31-31" aria-hidden="true" tabindex="-1"></a>    log_level <span class="op">=</span> <span class="bu">getattr</span>(logging, log.upper(), <span class="va">None</span>)</span>
-<span id="cb31-32"><a href="#cb31-32" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="kw">not</span> <span class="bu">isinstance</span>(log_level, <span class="bu">int</span>):</span>
-<span id="cb31-33"><a href="#cb31-33" aria-hidden="true" tabindex="-1"></a>        <span class="cf">raise</span> <span class="pp">ValueError</span>(<span class="ss">f&quot;Invalid log level `</span><span class="sc">{</span>log<span class="sc">}</span><span class="ss">`&quot;</span>)</span>
-<span id="cb31-34"><a href="#cb31-34" aria-hidden="true" tabindex="-1"></a>    logging.basicConfig(level<span class="op">=</span>log_level, filename<span class="op">=</span>log_file)</span>
-<span id="cb31-35"><a href="#cb31-35" aria-hidden="true" tabindex="-1"></a>    <span class="op">&lt;&lt;</span>example<span class="op">-</span>mpi<span class="op">-</span>main<span class="op">&gt;&gt;</span></span>
-<span id="cb31-36"><a href="#cb31-36" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-37"><a href="#cb31-37" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="va">__name__</span> <span class="op">==</span> <span class="st">&quot;__main__&quot;</span>:</span>
-<span id="cb31-38"><a href="#cb31-38" aria-hidden="true" tabindex="-1"></a>    argh.dispatch_command(main)</span></code></pre></div>
-</div>
-</section>
-<section id="dask-with-mpi" class="level2">
-<h2>Dask with MPI</h2>
-<p>There are two modes in which we may run Dask with MPI. One with a <code>dask-mpi</code> running as external scheduler, the other running everything as a single script. For this example we opt for the second, straight from the dask-mpi documentation:</p>
-<div class="named-code-block">
-<p>«example-mpi-imports»</p>
-<div class="sourceCode" id="cb32"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> dask_mpi <span class="im">import</span> initialize  <span class="co"># type: ignore</span></span>
-<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> dask.distributed <span class="im">import</span> Client  <span class="co"># type: ignore</span></span></code></pre></div>
-</div>
-<div class="named-code-block">
-<p>«example-mpi-main»</p>
-<div class="sourceCode" id="cb33"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>initialize()</span>
-<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>client <span class="op">=</span> Client()</span></code></pre></div>
+<span id="cb31-7"><a href="#cb31-7" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> logging</span>
+<span id="cb31-8"><a href="#cb31-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-9"><a href="#cb31-9" aria-hidden="true" tabindex="-1"></a><span class="op">&lt;&lt;</span>example<span class="op">-</span>mpi<span class="op">-</span>imports<span class="op">&gt;&gt;</span></span>
+<span id="cb31-10"><a href="#cb31-10" aria-hidden="true" tabindex="-1"></a><span class="op">&lt;&lt;</span>vector<span class="op">-</span>expressions<span class="op">&gt;&gt;</span></span>
+<span id="cb31-11"><a href="#cb31-11" aria-hidden="true" tabindex="-1"></a><span class="op">&lt;&lt;</span>example<span class="op">-</span>mpi<span class="op">-</span>coarse<span class="op">&gt;&gt;</span></span>
+<span id="cb31-12"><a href="#cb31-12" aria-hidden="true" tabindex="-1"></a><span class="op">&lt;&lt;</span>example<span class="op">-</span>mpi<span class="op">-</span>fine<span class="op">&gt;&gt;</span></span>
+<span id="cb31-13"><a href="#cb31-13" aria-hidden="true" tabindex="-1"></a><span class="op">&lt;&lt;</span>example<span class="op">-</span>mpi<span class="op">-</span>history<span class="op">&gt;&gt;</span></span>
+<span id="cb31-14"><a href="#cb31-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-15"><a href="#cb31-15" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> get_data(files: <span class="bu">list</span>[Path]) <span class="op">-&gt;</span> Iterator[np.ndarray]:</span>
+<span id="cb31-16"><a href="#cb31-16" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> n <span class="kw">in</span> files:</span>
+<span id="cb31-17"><a href="#cb31-17" aria-hidden="true" tabindex="-1"></a>        <span class="cf">with</span> h5.File(n, <span class="st">&quot;r&quot;</span>) <span class="im">as</span> f:</span>
+<span id="cb31-18"><a href="#cb31-18" aria-hidden="true" tabindex="-1"></a>            <span class="cf">yield</span> f[<span class="st">&quot;data&quot;</span>][:]</span>
+<span id="cb31-19"><a href="#cb31-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-20"><a href="#cb31-20" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> combine_fine_data(files: <span class="bu">list</span>[Path]) <span class="op">-&gt;</span> np.ndarray:</span>
+<span id="cb31-21"><a href="#cb31-21" aria-hidden="true" tabindex="-1"></a>    data <span class="op">=</span> get_data(files)</span>
+<span id="cb31-22"><a href="#cb31-22" aria-hidden="true" tabindex="-1"></a>    first <span class="op">=</span> <span class="bu">next</span>(data)</span>
+<span id="cb31-23"><a href="#cb31-23" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> np.concatenate([first] <span class="op">+</span> [x[<span class="dv">1</span>:] <span class="cf">for</span> x <span class="kw">in</span> data], axis<span class="op">=</span><span class="dv">0</span>)</span>
+<span id="cb31-24"><a href="#cb31-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-25"><a href="#cb31-25" aria-hidden="true" tabindex="-1"></a><span class="co"># def list_files(path: Path) -&gt; list[Path]:</span></span>
+<span id="cb31-26"><a href="#cb31-26" aria-hidden="true" tabindex="-1"></a><span class="co">#     all_files = path.glob(&quot;*.h5&quot;)</span></span>
+<span id="cb31-27"><a href="#cb31-27" aria-hidden="true" tabindex="-1"></a><span class="co">#     return []</span></span>
+<span id="cb31-28"><a href="#cb31-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-29"><a href="#cb31-29" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> main(log: <span class="bu">str</span> <span class="op">=</span> <span class="st">&quot;WARNING&quot;</span>, log_file: Optional[<span class="bu">str</span>] <span class="op">=</span> <span class="va">None</span>,</span>
+<span id="cb31-30"><a href="#cb31-30" aria-hidden="true" tabindex="-1"></a>         OMEGA0<span class="op">=</span><span class="fl">1.0</span>, ZETA<span class="op">=</span><span class="fl">0.5</span>, H<span class="op">=</span><span class="fl">0.01</span>):</span>
+<span id="cb31-31"><a href="#cb31-31" aria-hidden="true" tabindex="-1"></a>    <span class="co">&quot;&quot;&quot;Run model of dampened hormonic oscillator in Dask&quot;&quot;&quot;</span></span>
+<span id="cb31-32"><a href="#cb31-32" aria-hidden="true" tabindex="-1"></a>    log_level <span class="op">=</span> <span class="bu">getattr</span>(logging, log.upper(), <span class="va">None</span>)</span>
+<span id="cb31-33"><a href="#cb31-33" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> <span class="kw">not</span> <span class="bu">isinstance</span>(log_level, <span class="bu">int</span>):</span>
+<span id="cb31-34"><a href="#cb31-34" aria-hidden="true" tabindex="-1"></a>        <span class="cf">raise</span> <span class="pp">ValueError</span>(<span class="ss">f&quot;Invalid log level `</span><span class="sc">{</span>log<span class="sc">}</span><span class="ss">`&quot;</span>)</span>
+<span id="cb31-35"><a href="#cb31-35" aria-hidden="true" tabindex="-1"></a>    logging.basicConfig(level<span class="op">=</span>log_level, filename<span class="op">=</span>log_file)</span>
+<span id="cb31-36"><a href="#cb31-36" aria-hidden="true" tabindex="-1"></a>    <span class="op">&lt;&lt;</span>example<span class="op">-</span>mpi<span class="op">-</span>main<span class="op">&gt;&gt;</span></span>
+<span id="cb31-37"><a href="#cb31-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-38"><a href="#cb31-38" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="va">__name__</span> <span class="op">==</span> <span class="st">&quot;__main__&quot;</span>:</span>
+<span id="cb31-39"><a href="#cb31-39" aria-hidden="true" tabindex="-1"></a>    argh.dispatch_command(main)</span></code></pre></div>
 </div>
 </section>
 <section id="vector-arithmetic-expressions" class="level2">
@@ -758,38 +745,38 @@
 <p>We will be using <code>functools.partial</code> and functions <code>operator.add</code>, <code>operator.mul</code> etc, to create a data structure that describes all the operations that we might do on a <code>Vector</code>. Results may be stored for reference in a <code>hdf5</code> file, a feature that can also be hidden behind our <code>Vector</code> interface.</p>
 <div class="named-code-block">
 <p>«example-mpi-imports»</p>
-<div class="sourceCode" id="cb34"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> operator</span>
-<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> functools <span class="im">import</span> partial</span>
-<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> h5py <span class="im">as</span> h5  <span class="co"># type: ignore</span></span>
-<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> abc <span class="im">import</span> (ABC, abstractmethod)</span></code></pre></div>
+<div class="sourceCode" id="cb32"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> operator</span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> functools <span class="im">import</span> partial</span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> h5py <span class="im">as</span> h5  <span class="co"># type: ignore</span></span>
+<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> abc <span class="im">import</span> (ABC, abstractmethod)</span></code></pre></div>
 </div>
 <p>We create a <code>Vector</code> class that satisfies the <code>Vector</code> concept outlined earlier. We store the operations in terms of unary and binary operators.</p>
 <div class="named-code-block">
 <p>«vector-expressions»</p>
-<div class="sourceCode" id="cb35"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> Vector(ABC):</span>
-<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a>    <span class="at">@abstractmethod</span></span>
-<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="bu">reduce</span>(<span class="va">self</span>: Vector) <span class="op">-&gt;</span> np.ndarray:</span>
-<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a>        <span class="cf">pass</span></span>
-<span id="cb35-5"><a href="#cb35-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb35-6"><a href="#cb35-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__add__</span>(<span class="va">self</span>, other):</span>
-<span id="cb35-7"><a href="#cb35-7" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> BinaryExpr(operator.add, <span class="va">self</span>, other)</span>
-<span id="cb35-8"><a href="#cb35-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb35-9"><a href="#cb35-9" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__sub__</span>(<span class="va">self</span>, other):</span>
-<span id="cb35-10"><a href="#cb35-10" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> BinaryExpr(operator.sub, <span class="va">self</span>, other)</span>
-<span id="cb35-11"><a href="#cb35-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb35-12"><a href="#cb35-12" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__mul__</span>(<span class="va">self</span>, scale):</span>
-<span id="cb35-13"><a href="#cb35-13" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> UnaryExpr(partial(operator.mul, scale), <span class="va">self</span>)</span>
-<span id="cb35-14"><a href="#cb35-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb35-15"><a href="#cb35-15" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__rmul__</span>(<span class="va">self</span>, scale):</span>
-<span id="cb35-16"><a href="#cb35-16" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> UnaryExpr(partial(operator.mul, scale), <span class="va">self</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb33"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> Vector(ABC):</span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>    <span class="at">@abstractmethod</span></span>
+<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="bu">reduce</span>(<span class="va">self</span>: Vector) <span class="op">-&gt;</span> np.ndarray:</span>
+<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a>        <span class="cf">pass</span></span>
+<span id="cb33-5"><a href="#cb33-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-6"><a href="#cb33-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__add__</span>(<span class="va">self</span>, other):</span>
+<span id="cb33-7"><a href="#cb33-7" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> BinaryExpr(operator.add, <span class="va">self</span>, other)</span>
+<span id="cb33-8"><a href="#cb33-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-9"><a href="#cb33-9" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__sub__</span>(<span class="va">self</span>, other):</span>
+<span id="cb33-10"><a href="#cb33-10" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> BinaryExpr(operator.sub, <span class="va">self</span>, other)</span>
+<span id="cb33-11"><a href="#cb33-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-12"><a href="#cb33-12" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__mul__</span>(<span class="va">self</span>, scale):</span>
+<span id="cb33-13"><a href="#cb33-13" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> UnaryExpr(partial(operator.mul, scale), <span class="va">self</span>)</span>
+<span id="cb33-14"><a href="#cb33-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb33-15"><a href="#cb33-15" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__rmul__</span>(<span class="va">self</span>, scale):</span>
+<span id="cb33-16"><a href="#cb33-16" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> UnaryExpr(partial(operator.mul, scale), <span class="va">self</span>)</span></code></pre></div>
 </div>
 <p>The <code>Vector</code> class acts as a base class for the implementation of <code>BinaryExpr</code> and <code>UnaryExpr</code>, so that we can nest expressions accordingly. To force computation of a <code>Vector</code>, we supply the <code>reduce_expr</code> function that, in an example of terrible duck-typing, calls the <code>reduce</code> method recursively, until an object is reached that doesn’t have the <code>reduce</code> method.</p>
 <div class="named-code-block">
 <p>«vector-expressions»</p>
-<div class="sourceCode" id="cb36"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> reduce_expr(expr: Union[np.ndarray, Vector]) <span class="op">-&gt;</span> np.ndarray:</span>
-<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">while</span> <span class="bu">isinstance</span>(expr, Vector):</span>
-<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a>        expr <span class="op">=</span> expr.<span class="bu">reduce</span>()</span>
-<span id="cb36-4"><a href="#cb36-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> expr</span></code></pre></div>
+<div class="sourceCode" id="cb34"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> reduce_expr(expr: Union[np.ndarray, Vector]) <span class="op">-&gt;</span> np.ndarray:</span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">while</span> <span class="bu">isinstance</span>(expr, Vector):</span>
+<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a>        expr <span class="op">=</span> expr.<span class="bu">reduce</span>()</span>
+<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> expr</span></code></pre></div>
 </div>
 </section>
 <section id="hdf5-vectors" class="level3">
@@ -797,33 +784,33 @@
 <p>This means we can also hide variables that are stored in an HDF5 file behind this interface. We often want to store more information than just the state vector. In the case of parareal, we have results from fine integration and coarse integration. In the case of fine integration, what we need to represent is the final state of the integration, but we are also interested in the intermediate steps.</p>
 <div class="named-code-block">
 <p>«vector-expressions»</p>
-<div class="sourceCode" id="cb37"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="at">@dataclass</span></span>
-<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> H5Snap(Vector):</span>
-<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a>    path: Path</span>
-<span id="cb37-4"><a href="#cb37-4" aria-hidden="true" tabindex="-1"></a>    loc: <span class="bu">str</span></span>
-<span id="cb37-5"><a href="#cb37-5" aria-hidden="true" tabindex="-1"></a>    <span class="bu">slice</span>: <span class="bu">list</span>[Union[<span class="va">None</span>, <span class="bu">int</span>, <span class="bu">slice</span>]]</span>
-<span id="cb37-6"><a href="#cb37-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb37-7"><a href="#cb37-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> data(<span class="va">self</span>):</span>
-<span id="cb37-8"><a href="#cb37-8" aria-hidden="true" tabindex="-1"></a>        <span class="cf">with</span> h5.File(<span class="va">self</span>.path, <span class="st">&quot;r&quot;</span>) <span class="im">as</span> f:</span>
-<span id="cb37-9"><a href="#cb37-9" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span> f[<span class="va">self</span>.loc].<span class="fu">__getitem__</span>(<span class="bu">tuple</span>(<span class="va">self</span>.<span class="bu">slice</span>))</span>
-<span id="cb37-10"><a href="#cb37-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb37-11"><a href="#cb37-11" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="bu">reduce</span>(<span class="va">self</span>):</span>
-<span id="cb37-12"><a href="#cb37-12" aria-hidden="true" tabindex="-1"></a>        x <span class="op">=</span> <span class="va">self</span>.data()</span>
-<span id="cb37-13"><a href="#cb37-13" aria-hidden="true" tabindex="-1"></a>        logger <span class="op">=</span> logging.getLogger()</span>
-<span id="cb37-14"><a href="#cb37-14" aria-hidden="true" tabindex="-1"></a>        logger.debug(<span class="ss">f&quot;read </span><span class="sc">{x}</span><span class="ss"> from </span><span class="sc">{</span><span class="va">self</span><span class="sc">.</span>path<span class="sc">}</span><span class="ss">&quot;</span>)</span>
-<span id="cb37-15"><a href="#cb37-15" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="va">self</span>.data()</span></code></pre></div>
+<div class="sourceCode" id="cb35"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb35-1"><a href="#cb35-1" aria-hidden="true" tabindex="-1"></a><span class="at">@dataclass</span></span>
+<span id="cb35-2"><a href="#cb35-2" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> H5Snap(Vector):</span>
+<span id="cb35-3"><a href="#cb35-3" aria-hidden="true" tabindex="-1"></a>    path: Path</span>
+<span id="cb35-4"><a href="#cb35-4" aria-hidden="true" tabindex="-1"></a>    loc: <span class="bu">str</span></span>
+<span id="cb35-5"><a href="#cb35-5" aria-hidden="true" tabindex="-1"></a>    <span class="bu">slice</span>: <span class="bu">list</span>[Union[<span class="va">None</span>, <span class="bu">int</span>, <span class="bu">slice</span>]]</span>
+<span id="cb35-6"><a href="#cb35-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-7"><a href="#cb35-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> data(<span class="va">self</span>):</span>
+<span id="cb35-8"><a href="#cb35-8" aria-hidden="true" tabindex="-1"></a>        <span class="cf">with</span> h5.File(<span class="va">self</span>.path, <span class="st">&quot;r&quot;</span>) <span class="im">as</span> f:</span>
+<span id="cb35-9"><a href="#cb35-9" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span> f[<span class="va">self</span>.loc].<span class="fu">__getitem__</span>(<span class="bu">tuple</span>(<span class="va">self</span>.<span class="bu">slice</span>))</span>
+<span id="cb35-10"><a href="#cb35-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb35-11"><a href="#cb35-11" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="bu">reduce</span>(<span class="va">self</span>):</span>
+<span id="cb35-12"><a href="#cb35-12" aria-hidden="true" tabindex="-1"></a>        x <span class="op">=</span> <span class="va">self</span>.data()</span>
+<span id="cb35-13"><a href="#cb35-13" aria-hidden="true" tabindex="-1"></a>        logger <span class="op">=</span> logging.getLogger()</span>
+<span id="cb35-14"><a href="#cb35-14" aria-hidden="true" tabindex="-1"></a>        logger.debug(<span class="ss">f&quot;read </span><span class="sc">{x}</span><span class="ss"> from </span><span class="sc">{</span><span class="va">self</span><span class="sc">.</span>path<span class="sc">}</span><span class="ss">&quot;</span>)</span>
+<span id="cb35-15"><a href="#cb35-15" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="va">self</span>.data()</span></code></pre></div>
 </div>
 <p>To generate slices in a nice manner we can use a helper class:</p>
 <div class="named-code-block">
 <p>«vector-expressions»</p>
-<div class="sourceCode" id="cb38"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> Index:</span>
-<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__getitem__</span>(<span class="va">self</span>, idx):</span>
-<span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="bu">isinstance</span>(idx, <span class="bu">tuple</span>):</span>
-<span id="cb38-4"><a href="#cb38-4" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span> <span class="bu">list</span>(idx)</span>
-<span id="cb38-5"><a href="#cb38-5" aria-hidden="true" tabindex="-1"></a>        <span class="cf">else</span>:</span>
-<span id="cb38-6"><a href="#cb38-6" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span> [idx]</span>
-<span id="cb38-7"><a href="#cb38-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb38-8"><a href="#cb38-8" aria-hidden="true" tabindex="-1"></a>index <span class="op">=</span> Index()</span></code></pre></div>
+<div class="sourceCode" id="cb36"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> Index:</span>
+<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__getitem__</span>(<span class="va">self</span>, idx):</span>
+<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="bu">isinstance</span>(idx, <span class="bu">tuple</span>):</span>
+<span id="cb36-4"><a href="#cb36-4" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span> <span class="bu">list</span>(idx)</span>
+<span id="cb36-5"><a href="#cb36-5" aria-hidden="true" tabindex="-1"></a>        <span class="cf">else</span>:</span>
+<span id="cb36-6"><a href="#cb36-6" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span> [idx]</span>
+<span id="cb36-7"><a href="#cb36-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-8"><a href="#cb36-8" aria-hidden="true" tabindex="-1"></a>index <span class="op">=</span> Index()</span></code></pre></div>
 </div>
 <p>Then <code>index[a:b,c]</code> returns a list of slices <code>[slice(a,b), c]</code> (type <code>list[Union[None, int, slice]]</code>).</p>
 </section>
@@ -832,26 +819,26 @@
 <p>There are two classes of operators, unary and binary (more arguments can usually be expressed as a composition of unary and binary forms). We store the arguments together with a function operating on the arguments. The function should be serializable (e.g. using <code>pickle</code>), meaning that <code>lambda</code> expressions are not allowed, but <code>partial</code> applications and functions in <code>operator</code> typically are ok.</p>
 <div class="named-code-block">
 <p>«vector-expressions»</p>
-<div class="sourceCode" id="cb39"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="at">@dataclass</span></span>
-<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> UnaryExpr(Vector):</span>
-<span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a>    func: Callable[[np.ndarray], np.ndarray]</span>
-<span id="cb39-4"><a href="#cb39-4" aria-hidden="true" tabindex="-1"></a>    inp: Vector</span>
-<span id="cb39-5"><a href="#cb39-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb39-6"><a href="#cb39-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="bu">reduce</span>(<span class="va">self</span>):</span>
-<span id="cb39-7"><a href="#cb39-7" aria-hidden="true" tabindex="-1"></a>        a <span class="op">=</span> reduce_expr(<span class="va">self</span>.inp)</span>
-<span id="cb39-8"><a href="#cb39-8" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="va">self</span>.func(a)</span>
-<span id="cb39-9"><a href="#cb39-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb39-10"><a href="#cb39-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb39-11"><a href="#cb39-11" aria-hidden="true" tabindex="-1"></a><span class="at">@dataclass</span></span>
-<span id="cb39-12"><a href="#cb39-12" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> BinaryExpr(Vector):</span>
-<span id="cb39-13"><a href="#cb39-13" aria-hidden="true" tabindex="-1"></a>    func: Callable[[np.ndarray, np.ndarray], np.ndarray]</span>
-<span id="cb39-14"><a href="#cb39-14" aria-hidden="true" tabindex="-1"></a>    inp1: Vector</span>
-<span id="cb39-15"><a href="#cb39-15" aria-hidden="true" tabindex="-1"></a>    inp2: Vector</span>
-<span id="cb39-16"><a href="#cb39-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb39-17"><a href="#cb39-17" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="bu">reduce</span>(<span class="va">self</span>):</span>
-<span id="cb39-18"><a href="#cb39-18" aria-hidden="true" tabindex="-1"></a>        a <span class="op">=</span> reduce_expr(<span class="va">self</span>.inp1)</span>
-<span id="cb39-19"><a href="#cb39-19" aria-hidden="true" tabindex="-1"></a>        b <span class="op">=</span> reduce_expr(<span class="va">self</span>.inp2)</span>
-<span id="cb39-20"><a href="#cb39-20" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="va">self</span>.func(a, b)</span></code></pre></div>
+<div class="sourceCode" id="cb37"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="at">@dataclass</span></span>
+<span id="cb37-2"><a href="#cb37-2" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> UnaryExpr(Vector):</span>
+<span id="cb37-3"><a href="#cb37-3" aria-hidden="true" tabindex="-1"></a>    func: Callable[[np.ndarray], np.ndarray]</span>
+<span id="cb37-4"><a href="#cb37-4" aria-hidden="true" tabindex="-1"></a>    inp: Vector</span>
+<span id="cb37-5"><a href="#cb37-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-6"><a href="#cb37-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="bu">reduce</span>(<span class="va">self</span>):</span>
+<span id="cb37-7"><a href="#cb37-7" aria-hidden="true" tabindex="-1"></a>        a <span class="op">=</span> reduce_expr(<span class="va">self</span>.inp)</span>
+<span id="cb37-8"><a href="#cb37-8" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="va">self</span>.func(a)</span>
+<span id="cb37-9"><a href="#cb37-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-10"><a href="#cb37-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-11"><a href="#cb37-11" aria-hidden="true" tabindex="-1"></a><span class="at">@dataclass</span></span>
+<span id="cb37-12"><a href="#cb37-12" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> BinaryExpr(Vector):</span>
+<span id="cb37-13"><a href="#cb37-13" aria-hidden="true" tabindex="-1"></a>    func: Callable[[np.ndarray, np.ndarray], np.ndarray]</span>
+<span id="cb37-14"><a href="#cb37-14" aria-hidden="true" tabindex="-1"></a>    inp1: Vector</span>
+<span id="cb37-15"><a href="#cb37-15" aria-hidden="true" tabindex="-1"></a>    inp2: Vector</span>
+<span id="cb37-16"><a href="#cb37-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb37-17"><a href="#cb37-17" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="bu">reduce</span>(<span class="va">self</span>):</span>
+<span id="cb37-18"><a href="#cb37-18" aria-hidden="true" tabindex="-1"></a>        a <span class="op">=</span> reduce_expr(<span class="va">self</span>.inp1)</span>
+<span id="cb37-19"><a href="#cb37-19" aria-hidden="true" tabindex="-1"></a>        b <span class="op">=</span> reduce_expr(<span class="va">self</span>.inp2)</span>
+<span id="cb37-20"><a href="#cb37-20" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="va">self</span>.func(a, b)</span></code></pre></div>
 </div>
 </section>
 <section id="literal-expressions" class="level3">
@@ -859,12 +846,103 @@
 <p>To bootstrap our computation we may need to define a <code>Vector</code> directly represented by a Numpy array.</p>
 <div class="named-code-block">
 <p>«vector-expressions»</p>
-<div class="sourceCode" id="cb40"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a><span class="at">@dataclass</span></span>
-<span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> LiteralExpr(Vector):</span>
-<span id="cb40-3"><a href="#cb40-3" aria-hidden="true" tabindex="-1"></a>    value: np.ndarray</span>
-<span id="cb40-4"><a href="#cb40-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb40-5"><a href="#cb40-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="bu">reduce</span>(<span class="va">self</span>):</span>
-<span id="cb40-6"><a href="#cb40-6" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="va">self</span>.value</span></code></pre></div>
+<div class="sourceCode" id="cb38"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="at">@dataclass</span></span>
+<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> LiteralExpr(Vector):</span>
+<span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a>    value: np.ndarray</span>
+<span id="cb38-4"><a href="#cb38-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb38-5"><a href="#cb38-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> <span class="bu">reduce</span>(<span class="va">self</span>):</span>
+<span id="cb38-6"><a href="#cb38-6" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="va">self</span>.value</span></code></pre></div>
+</div>
+</section>
+</section>
+<section id="the-coarse-and-fine-solvers" class="level2">
+<h2>The coarse and fine solvers</h2>
+<p>The API of <code>parareal</code> expects us to specify a solver with a function of three arguments, <code>y0</code>, <code>t0</code> and <code>t1</code>. For this function, we need the model input parameters to be in scope. Not only that, the scope needs to be completely serialised using <code>pickle</code>. For this reason, it is not enough to have a closure. We need to define a dataclass with a single <code>solution</code> method.</p>
+<p>The <code>Coarse</code> solution is not explicitely archived. We let <code>dask</code> handle the propagation of the result to further computations.</p>
+<div class="named-code-block">
+<p>«example-mpi-coarse»</p>
+<div class="sourceCode" id="cb39"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="at">@dataclass</span></span>
+<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> Coarse:</span>
+<span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a>    n_iter: <span class="bu">int</span></span>
+<span id="cb39-4"><a href="#cb39-4" aria-hidden="true" tabindex="-1"></a>    system: Any</span>
+<span id="cb39-5"><a href="#cb39-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-6"><a href="#cb39-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> solution(<span class="va">self</span>, y, t0, t1):</span>
+<span id="cb39-7"><a href="#cb39-7" aria-hidden="true" tabindex="-1"></a>        a <span class="op">=</span> LiteralExpr(forward_euler(<span class="va">self</span>.system)(reduce_expr(y), t0, t1))</span>
+<span id="cb39-8"><a href="#cb39-8" aria-hidden="true" tabindex="-1"></a>        logging.debug(<span class="ss">f&quot;coarse result: </span><span class="sc">{y}</span><span class="ss"> </span><span class="sc">{</span>reduce_expr(y)<span class="sc">}</span><span class="ss"> </span><span class="sc">{t0}</span><span class="ss"> </span><span class="sc">{t1}</span><span class="ss"> </span><span class="sc">{a}</span><span class="ss">&quot;</span>)</span>
+<span id="cb39-9"><a href="#cb39-9" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> a</span></code></pre></div>
+</div>
+<p>For the <code>fine</code> integrator however, we want to save the complete result, so that we can retrieve the full history after the computation has finished. So, instead of a <code>LiteralExpr</code>, the fine integrator returns a <code>H5Snap</code>.</p>
+<div class="named-code-block">
+<p>«example-mpi-fine»</p>
+<div class="sourceCode" id="cb40"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> generate_filename(name: <span class="bu">str</span>, n_iter: <span class="bu">int</span>, t0: <span class="bu">float</span>, t1: <span class="bu">float</span>) <span class="op">-&gt;</span> <span class="bu">str</span>:</span>
+<span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="ss">f&quot;</span><span class="sc">{</span>name<span class="sc">}</span><span class="ss">-</span><span class="sc">{</span>n_iter<span class="sc">:04}</span><span class="ss">-</span><span class="sc">{</span><span class="bu">int</span>(t0<span class="op">*</span><span class="dv">1000</span>)<span class="sc">:06}</span><span class="ss">-</span><span class="sc">{</span><span class="bu">int</span>(t1<span class="op">*</span><span class="dv">1000</span>)<span class="sc">:06}</span><span class="ss">.h5&quot;</span></span>
+<span id="cb40-3"><a href="#cb40-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb40-4"><a href="#cb40-4" aria-hidden="true" tabindex="-1"></a><span class="at">@dataclass</span></span>
+<span id="cb40-5"><a href="#cb40-5" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> Fine:</span>
+<span id="cb40-6"><a href="#cb40-6" aria-hidden="true" tabindex="-1"></a>    parent: Path</span>
+<span id="cb40-7"><a href="#cb40-7" aria-hidden="true" tabindex="-1"></a>    name: <span class="bu">str</span></span>
+<span id="cb40-8"><a href="#cb40-8" aria-hidden="true" tabindex="-1"></a>    n_iter: <span class="bu">int</span></span>
+<span id="cb40-9"><a href="#cb40-9" aria-hidden="true" tabindex="-1"></a>    system: Any</span>
+<span id="cb40-10"><a href="#cb40-10" aria-hidden="true" tabindex="-1"></a>    h: <span class="bu">float</span></span>
+<span id="cb40-11"><a href="#cb40-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb40-12"><a href="#cb40-12" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> solution(<span class="va">self</span>, y, t0, t1):</span>
+<span id="cb40-13"><a href="#cb40-13" aria-hidden="true" tabindex="-1"></a>        logger <span class="op">=</span> logging.getLogger()</span>
+<span id="cb40-14"><a href="#cb40-14" aria-hidden="true" tabindex="-1"></a>        n <span class="op">=</span> math.ceil((t1 <span class="op">-</span> t0) <span class="op">/</span> <span class="va">self</span>.h)</span>
+<span id="cb40-15"><a href="#cb40-15" aria-hidden="true" tabindex="-1"></a>        t <span class="op">=</span> np.linspace(t0, t1, n <span class="op">+</span> <span class="dv">1</span>)</span>
+<span id="cb40-16"><a href="#cb40-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb40-17"><a href="#cb40-17" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.parent.mkdir(parents<span class="op">=</span><span class="va">True</span>, exist_ok<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb40-18"><a href="#cb40-18" aria-hidden="true" tabindex="-1"></a>        path <span class="op">=</span> <span class="va">self</span>.parent <span class="op">/</span> generate_filename(<span class="va">self</span>.name, <span class="va">self</span>.n_iter, t0, t1)</span>
+<span id="cb40-19"><a href="#cb40-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb40-20"><a href="#cb40-20" aria-hidden="true" tabindex="-1"></a>        <span class="cf">with</span> h5.File(path, <span class="st">&quot;w&quot;</span>) <span class="im">as</span> f:</span>
+<span id="cb40-21"><a href="#cb40-21" aria-hidden="true" tabindex="-1"></a>            logger.debug(<span class="st">&quot;fine </span><span class="sc">%f</span><span class="st"> - </span><span class="sc">%f</span><span class="st">&quot;</span>, t0, t1)</span>
+<span id="cb40-22"><a href="#cb40-22" aria-hidden="true" tabindex="-1"></a>            y0 <span class="op">=</span> reduce_expr(y)</span>
+<span id="cb40-23"><a href="#cb40-23" aria-hidden="true" tabindex="-1"></a>            logger.debug(<span class="st">&quot;:    </span><span class="sc">%s</span><span class="st"> -&gt; </span><span class="sc">%s</span><span class="st">&quot;</span>, y, y0)</span>
+<span id="cb40-24"><a href="#cb40-24" aria-hidden="true" tabindex="-1"></a>            x <span class="op">=</span> tabulate(forward_euler(<span class="va">self</span>.system), reduce_expr(y), t)</span>
+<span id="cb40-25"><a href="#cb40-25" aria-hidden="true" tabindex="-1"></a>            ds <span class="op">=</span> f.create_dataset(<span class="st">&quot;data&quot;</span>, data<span class="op">=</span>x)</span>
+<span id="cb40-26"><a href="#cb40-26" aria-hidden="true" tabindex="-1"></a>            ds.attrs[<span class="st">&quot;t0&quot;</span>] <span class="op">=</span> t0</span>
+<span id="cb40-27"><a href="#cb40-27" aria-hidden="true" tabindex="-1"></a>            ds.attrs[<span class="st">&quot;t1&quot;</span>] <span class="op">=</span> t1</span>
+<span id="cb40-28"><a href="#cb40-28" aria-hidden="true" tabindex="-1"></a>            ds.attrs[<span class="st">&quot;h&quot;</span>] <span class="op">=</span> <span class="va">self</span>.h</span>
+<span id="cb40-29"><a href="#cb40-29" aria-hidden="true" tabindex="-1"></a>            ds.attrs[<span class="st">&quot;n&quot;</span>] <span class="op">=</span> n</span>
+<span id="cb40-30"><a href="#cb40-30" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> H5Snap(path, <span class="st">&quot;data&quot;</span>, index[<span class="op">-</span><span class="dv">1</span>])</span></code></pre></div>
+</div>
+</section>
+<section id="keeping-track-of-convergence" class="level2">
+<h2>Keeping track of convergence</h2>
+<p>We want to cancel any scheduled computations as soon has we are happy that parareal has converged. This means we need to keep track of the results coming in, and check for convergence. This is done in the <code>History</code> class.</p>
+<div class="named-code-block">
+<p>«example-mpi-history»</p>
+<div class="sourceCode" id="cb41"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="at">@dataclass</span></span>
+<span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> History:</span>
+<span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a>    archive: Path</span>
+<span id="cb41-4"><a href="#cb41-4" aria-hidden="true" tabindex="-1"></a>    history: <span class="bu">list</span>[<span class="bu">list</span>[Vector]] <span class="op">=</span> field(default_factory<span class="op">=</span><span class="bu">list</span>)</span>
+<span id="cb41-5"><a href="#cb41-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb41-6"><a href="#cb41-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> convergence_test(<span class="va">self</span>, y) <span class="op">-&gt;</span> <span class="bu">bool</span>:</span>
+<span id="cb41-7"><a href="#cb41-7" aria-hidden="true" tabindex="-1"></a>        logger <span class="op">=</span> logging.getLogger()</span>
+<span id="cb41-8"><a href="#cb41-8" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.history.append(y)</span>
+<span id="cb41-9"><a href="#cb41-9" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="bu">len</span>(<span class="va">self</span>.history) <span class="op">&lt;</span> <span class="dv">2</span>:</span>
+<span id="cb41-10"><a href="#cb41-10" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span> <span class="va">False</span></span>
+<span id="cb41-11"><a href="#cb41-11" aria-hidden="true" tabindex="-1"></a>        a <span class="op">=</span> np.array([reduce_expr(x) <span class="cf">for</span> x <span class="kw">in</span> <span class="va">self</span>.history[<span class="op">-</span><span class="dv">2</span>]])</span>
+<span id="cb41-12"><a href="#cb41-12" aria-hidden="true" tabindex="-1"></a>        b <span class="op">=</span> np.array([reduce_expr(x) <span class="cf">for</span> x <span class="kw">in</span> <span class="va">self</span>.history[<span class="op">-</span><span class="dv">1</span>]])</span>
+<span id="cb41-13"><a href="#cb41-13" aria-hidden="true" tabindex="-1"></a>        maxdif <span class="op">=</span> np.<span class="bu">abs</span>(a <span class="op">-</span> b).<span class="bu">max</span>()</span>
+<span id="cb41-14"><a href="#cb41-14" aria-hidden="true" tabindex="-1"></a>        converged <span class="op">=</span> maxdif <span class="op">&lt;</span> <span class="fl">1e-4</span></span>
+<span id="cb41-15"><a href="#cb41-15" aria-hidden="true" tabindex="-1"></a>        logger.info(<span class="st">&quot;maxdif of </span><span class="sc">%f</span><span class="st">&quot;</span>, maxdif)</span>
+<span id="cb41-16"><a href="#cb41-16" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> converged:</span>
+<span id="cb41-17"><a href="#cb41-17" aria-hidden="true" tabindex="-1"></a>            logger.info(<span class="st">&quot;Converged after </span><span class="sc">%u</span><span class="st"> iteration&quot;</span>, <span class="bu">len</span>(<span class="va">self</span>.history))</span>
+<span id="cb41-18"><a href="#cb41-18" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> converged</span></code></pre></div>
+</div>
+<section id="dask-with-mpi" class="level3">
+<h3>Dask with MPI</h3>
+<p>There are two modes in which we may run Dask with MPI. One with a <code>dask-mpi</code> running as external scheduler, the other running everything as a single script. For this example we opt for the second, straight from the dask-mpi documentation:</p>
+<div class="named-code-block">
+<p>«example-mpi-imports»</p>
+<div class="sourceCode" id="cb42"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> dask</span>
+<span id="cb42-2"><a href="#cb42-2" aria-hidden="true" tabindex="-1"></a><span class="co"># from dask_mpi import initialize  # type: ignore</span></span>
+<span id="cb42-3"><a href="#cb42-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> dask.distributed <span class="im">import</span> Client  <span class="co"># type: ignore</span></span></code></pre></div>
+</div>
+<div class="named-code-block">
+<p>«example-mpi-main»</p>
+<div class="sourceCode" id="cb43"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a><span class="co"># initialize()</span></span>
+<span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a>client <span class="op">=</span> Client(n_workers<span class="op">=</span><span class="dv">4</span>, threads_per_worker<span class="op">=</span><span class="dv">1</span>)</span></code></pre></div>
 </div>
 </section>
 </section>
@@ -872,108 +950,39 @@
 <h2>Running the harmonic oscillator</h2>
 <div class="named-code-block">
 <p>«example-mpi-imports»</p>
-<div class="sourceCode" id="cb41"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> parareal.futures <span class="im">import</span> (Parareal)</span>
-<span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> parareal.forward_euler <span class="im">import</span> forward_euler</span>
-<span id="cb41-4"><a href="#cb41-4" aria-hidden="true" tabindex="-1"></a><span class="co"># from pintFoam.parareal.iterate_solution import iterate_solution</span></span>
-<span id="cb41-5"><a href="#cb41-5" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> parareal.tabulate_solution <span class="im">import</span> tabulate</span>
-<span id="cb41-6"><a href="#cb41-6" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> parareal.harmonic_oscillator <span class="im">import</span> (underdamped_solution, harmonic_oscillator)</span>
-<span id="cb41-7"><a href="#cb41-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb41-8"><a href="#cb41-8" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> math</span>
-<span id="cb41-9"><a href="#cb41-9" aria-hidden="true" tabindex="-1"></a><span class="co"># from uuid import uuid4</span></span>
-<span id="cb41-10"><a href="#cb41-10" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> logging</span></code></pre></div>
+<div class="sourceCode" id="cb44"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> parareal.futures <span class="im">import</span> (Parareal)</span>
+<span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb44-3"><a href="#cb44-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> parareal.forward_euler <span class="im">import</span> forward_euler</span>
+<span id="cb44-4"><a href="#cb44-4" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> parareal.tabulate_solution <span class="im">import</span> tabulate</span>
+<span id="cb44-5"><a href="#cb44-5" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> parareal.harmonic_oscillator <span class="im">import</span> (underdamped_solution, harmonic_oscillator)</span>
+<span id="cb44-6"><a href="#cb44-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb44-7"><a href="#cb44-7" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> math</span></code></pre></div>
 </div>
+<p>For reference, we also run the full integrator using just the <code>Fine</code> solution.</p>
 <div class="named-code-block">
 <p>«example-mpi-main»</p>
-<div class="sourceCode" id="cb42"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb42-1"><a href="#cb42-1" aria-hidden="true" tabindex="-1"></a>system <span class="op">=</span> harmonic_oscillator(OMEGA0, ZETA)</span></code></pre></div>
+<div class="sourceCode" id="cb45"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a>system <span class="op">=</span> harmonic_oscillator(OMEGA0, ZETA)</span>
+<span id="cb45-2"><a href="#cb45-2" aria-hidden="true" tabindex="-1"></a>y0 <span class="op">=</span> np.array([<span class="fl">1.0</span>, <span class="fl">0.0</span>])</span>
+<span id="cb45-3"><a href="#cb45-3" aria-hidden="true" tabindex="-1"></a>t <span class="op">=</span> np.linspace(<span class="fl">0.0</span>, <span class="fl">15.0</span>, <span class="dv">20</span>)</span>
+<span id="cb45-4"><a href="#cb45-4" aria-hidden="true" tabindex="-1"></a>archive <span class="op">=</span> Path(<span class="st">&quot;./output/euler&quot;</span>)</span>
+<span id="cb45-5"><a href="#cb45-5" aria-hidden="true" tabindex="-1"></a>tabulate(Fine(archive, <span class="st">&quot;fine&quot;</span>, <span class="dv">0</span>, system, H).solution, LiteralExpr(y0), t)</span></code></pre></div>
 </div>
-<div class="named-code-block">
-<p>«example-mpi-coarse»</p>
-<div class="sourceCode" id="cb43"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a><span class="at">@dataclass</span></span>
-<span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> Coarse:</span>
-<span id="cb43-3"><a href="#cb43-3" aria-hidden="true" tabindex="-1"></a>    n_iter: <span class="bu">int</span></span>
-<span id="cb43-4"><a href="#cb43-4" aria-hidden="true" tabindex="-1"></a>    system: Any</span>
-<span id="cb43-5"><a href="#cb43-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb43-6"><a href="#cb43-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> solution(<span class="va">self</span>, y, t0, t1):</span>
-<span id="cb43-7"><a href="#cb43-7" aria-hidden="true" tabindex="-1"></a>        a <span class="op">=</span> LiteralExpr(forward_euler(<span class="va">self</span>.system)(reduce_expr(y), t0, t1))</span>
-<span id="cb43-8"><a href="#cb43-8" aria-hidden="true" tabindex="-1"></a>        logging.debug(<span class="ss">f&quot;coarse result: </span><span class="sc">{y}</span><span class="ss"> </span><span class="sc">{</span>reduce_expr(y)<span class="sc">}</span><span class="ss"> </span><span class="sc">{t0}</span><span class="ss"> </span><span class="sc">{t1}</span><span class="ss"> </span><span class="sc">{a}</span><span class="ss">&quot;</span>)</span>
-<span id="cb43-9"><a href="#cb43-9" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> a</span></code></pre></div>
-</div>
-<div class="named-code-block">
-<p>«example-mpi-fine»</p>
-<div class="sourceCode" id="cb44"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> generate_filename(name: <span class="bu">str</span>, n_iter: <span class="bu">int</span>, t0: <span class="bu">float</span>, t1: <span class="bu">float</span>) <span class="op">-&gt;</span> <span class="bu">str</span>:</span>
-<span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="ss">f&quot;</span><span class="sc">{</span>name<span class="sc">}</span><span class="ss">-</span><span class="sc">{</span>n_iter<span class="sc">:04}</span><span class="ss">-</span><span class="sc">{</span><span class="bu">int</span>(t0<span class="op">*</span><span class="dv">1000</span>)<span class="sc">:06}</span><span class="ss">-</span><span class="sc">{</span><span class="bu">int</span>(t1<span class="op">*</span><span class="dv">1000</span>)<span class="sc">:06}</span><span class="ss">.h5&quot;</span></span>
-<span id="cb44-3"><a href="#cb44-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb44-4"><a href="#cb44-4" aria-hidden="true" tabindex="-1"></a><span class="at">@dataclass</span></span>
-<span id="cb44-5"><a href="#cb44-5" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> Fine:</span>
-<span id="cb44-6"><a href="#cb44-6" aria-hidden="true" tabindex="-1"></a>    parent: Path</span>
-<span id="cb44-7"><a href="#cb44-7" aria-hidden="true" tabindex="-1"></a>    name: <span class="bu">str</span></span>
-<span id="cb44-8"><a href="#cb44-8" aria-hidden="true" tabindex="-1"></a>    n_iter: <span class="bu">int</span></span>
-<span id="cb44-9"><a href="#cb44-9" aria-hidden="true" tabindex="-1"></a>    system: Any</span>
-<span id="cb44-10"><a href="#cb44-10" aria-hidden="true" tabindex="-1"></a>    h: <span class="bu">float</span></span>
-<span id="cb44-11"><a href="#cb44-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb44-12"><a href="#cb44-12" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> solution(<span class="va">self</span>, y, t0, t1):</span>
-<span id="cb44-13"><a href="#cb44-13" aria-hidden="true" tabindex="-1"></a>        logger <span class="op">=</span> logging.getLogger()</span>
-<span id="cb44-14"><a href="#cb44-14" aria-hidden="true" tabindex="-1"></a>        n <span class="op">=</span> math.ceil((t1 <span class="op">-</span> t0) <span class="op">/</span> <span class="va">self</span>.h)</span>
-<span id="cb44-15"><a href="#cb44-15" aria-hidden="true" tabindex="-1"></a>        t <span class="op">=</span> np.linspace(t0, t1, n <span class="op">+</span> <span class="dv">1</span>)</span>
-<span id="cb44-16"><a href="#cb44-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb44-17"><a href="#cb44-17" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.parent.mkdir(parents<span class="op">=</span><span class="va">True</span>, exist_ok<span class="op">=</span><span class="va">True</span>)</span>
-<span id="cb44-18"><a href="#cb44-18" aria-hidden="true" tabindex="-1"></a>        path <span class="op">=</span> <span class="va">self</span>.parent <span class="op">/</span> generate_filename(<span class="va">self</span>.name, <span class="va">self</span>.n_iter, t0, t1)</span>
-<span id="cb44-19"><a href="#cb44-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb44-20"><a href="#cb44-20" aria-hidden="true" tabindex="-1"></a>        <span class="cf">with</span> h5.File(path, <span class="st">&quot;w&quot;</span>) <span class="im">as</span> f:</span>
-<span id="cb44-21"><a href="#cb44-21" aria-hidden="true" tabindex="-1"></a>            logger.debug(<span class="st">&quot;fine </span><span class="sc">%f</span><span class="st"> - </span><span class="sc">%f</span><span class="st">&quot;</span>, t0, t1)</span>
-<span id="cb44-22"><a href="#cb44-22" aria-hidden="true" tabindex="-1"></a>            y0 <span class="op">=</span> reduce_expr(y)</span>
-<span id="cb44-23"><a href="#cb44-23" aria-hidden="true" tabindex="-1"></a>            logger.debug(<span class="st">&quot;:    </span><span class="sc">%s</span><span class="st"> -&gt; </span><span class="sc">%s</span><span class="st">&quot;</span>, y, y0)</span>
-<span id="cb44-24"><a href="#cb44-24" aria-hidden="true" tabindex="-1"></a>            x <span class="op">=</span> tabulate(forward_euler(<span class="va">self</span>.system), reduce_expr(y), t)</span>
-<span id="cb44-25"><a href="#cb44-25" aria-hidden="true" tabindex="-1"></a>            ds <span class="op">=</span> f.create_dataset(<span class="st">&quot;data&quot;</span>, data<span class="op">=</span>x)</span>
-<span id="cb44-26"><a href="#cb44-26" aria-hidden="true" tabindex="-1"></a>            ds.attrs[<span class="st">&quot;t0&quot;</span>] <span class="op">=</span> t0</span>
-<span id="cb44-27"><a href="#cb44-27" aria-hidden="true" tabindex="-1"></a>            ds.attrs[<span class="st">&quot;t1&quot;</span>] <span class="op">=</span> t1</span>
-<span id="cb44-28"><a href="#cb44-28" aria-hidden="true" tabindex="-1"></a>            ds.attrs[<span class="st">&quot;h&quot;</span>] <span class="op">=</span> <span class="va">self</span>.h</span>
-<span id="cb44-29"><a href="#cb44-29" aria-hidden="true" tabindex="-1"></a>            ds.attrs[<span class="st">&quot;n&quot;</span>] <span class="op">=</span> n</span>
-<span id="cb44-30"><a href="#cb44-30" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> H5Snap(path, <span class="st">&quot;data&quot;</span>, index[<span class="op">-</span><span class="dv">1</span>])</span></code></pre></div>
-</div>
+<section id="running-parareal" class="level3">
+<h3>Running parareal</h3>
 <div class="named-code-block">
 <p>«example-mpi-main»</p>
-<div class="sourceCode" id="cb45"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a>y0 <span class="op">=</span> np.array([<span class="fl">1.0</span>, <span class="fl">0.0</span>])</span>
-<span id="cb45-2"><a href="#cb45-2" aria-hidden="true" tabindex="-1"></a>t <span class="op">=</span> np.linspace(<span class="fl">0.0</span>, <span class="fl">15.0</span>, <span class="dv">20</span>)</span>
-<span id="cb45-3"><a href="#cb45-3" aria-hidden="true" tabindex="-1"></a>archive <span class="op">=</span> Path(<span class="st">&quot;./output/euler&quot;</span>)</span>
-<span id="cb45-4"><a href="#cb45-4" aria-hidden="true" tabindex="-1"></a>underdamped_solution(OMEGA0, ZETA)(t)</span>
-<span id="cb45-5"><a href="#cb45-5" aria-hidden="true" tabindex="-1"></a>tabulate(Fine(archive, <span class="st">&quot;fine&quot;</span>, <span class="dv">0</span>, system, H).solution, LiteralExpr(y0), t)</span>
-<span id="cb45-6"><a href="#cb45-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb45-7"><a href="#cb45-7" aria-hidden="true" tabindex="-1"></a><span class="co"># euler_files = archive.glob(&quot;*.h5&quot;)</span></span></code></pre></div>
+<div class="sourceCode" id="cb46"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a>archive <span class="op">=</span> Path(<span class="st">&quot;./output/parareal&quot;</span>)</span>
+<span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a>p <span class="op">=</span> Parareal(</span>
+<span id="cb46-3"><a href="#cb46-3" aria-hidden="true" tabindex="-1"></a>    client,</span>
+<span id="cb46-4"><a href="#cb46-4" aria-hidden="true" tabindex="-1"></a>    <span class="kw">lambda</span> n: Coarse(n, system).solution,</span>
+<span id="cb46-5"><a href="#cb46-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">lambda</span> n: Fine(archive, <span class="st">&quot;fine&quot;</span>, n, system, H).solution)</span>
+<span id="cb46-6"><a href="#cb46-6" aria-hidden="true" tabindex="-1"></a>jobs <span class="op">=</span> p.schedule(LiteralExpr(y0), t)</span>
+<span id="cb46-7"><a href="#cb46-7" aria-hidden="true" tabindex="-1"></a>history <span class="op">=</span> History(archive)</span>
+<span id="cb46-8"><a href="#cb46-8" aria-hidden="true" tabindex="-1"></a>p.wait(jobs, history.convergence_test)</span>
+<span id="cb46-9"><a href="#cb46-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb46-10"><a href="#cb46-10" aria-hidden="true" tabindex="-1"></a>client.shutdown()</span></code></pre></div>
 </div>
-<div class="named-code-block">
-<p>«example-mpi-history»</p>
-<div class="sourceCode" id="cb46"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a><span class="at">@dataclass</span></span>
-<span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> History:</span>
-<span id="cb46-3"><a href="#cb46-3" aria-hidden="true" tabindex="-1"></a>    archive: Path</span>
-<span id="cb46-4"><a href="#cb46-4" aria-hidden="true" tabindex="-1"></a>    history: <span class="bu">list</span>[<span class="bu">list</span>[Vector]] <span class="op">=</span> field(default_factory<span class="op">=</span><span class="bu">list</span>)</span>
-<span id="cb46-5"><a href="#cb46-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb46-6"><a href="#cb46-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> convergence_test(<span class="va">self</span>, y) <span class="op">-&gt;</span> <span class="bu">bool</span>:</span>
-<span id="cb46-7"><a href="#cb46-7" aria-hidden="true" tabindex="-1"></a>        logger <span class="op">=</span> logging.getLogger()</span>
-<span id="cb46-8"><a href="#cb46-8" aria-hidden="true" tabindex="-1"></a>        <span class="va">self</span>.history.append(y)</span>
-<span id="cb46-9"><a href="#cb46-9" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="bu">len</span>(<span class="va">self</span>.history) <span class="op">&lt;</span> <span class="dv">2</span>:</span>
-<span id="cb46-10"><a href="#cb46-10" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span> <span class="va">False</span></span>
-<span id="cb46-11"><a href="#cb46-11" aria-hidden="true" tabindex="-1"></a>        a <span class="op">=</span> np.array([reduce_expr(x) <span class="cf">for</span> x <span class="kw">in</span> <span class="va">self</span>.history[<span class="op">-</span><span class="dv">2</span>]])</span>
-<span id="cb46-12"><a href="#cb46-12" aria-hidden="true" tabindex="-1"></a>        b <span class="op">=</span> np.array([reduce_expr(x) <span class="cf">for</span> x <span class="kw">in</span> <span class="va">self</span>.history[<span class="op">-</span><span class="dv">1</span>]])</span>
-<span id="cb46-13"><a href="#cb46-13" aria-hidden="true" tabindex="-1"></a>        maxdif <span class="op">=</span> np.<span class="bu">abs</span>(a <span class="op">-</span> b).<span class="bu">max</span>()</span>
-<span id="cb46-14"><a href="#cb46-14" aria-hidden="true" tabindex="-1"></a>        converged <span class="op">=</span> maxdif <span class="op">&lt;</span> <span class="fl">1e-4</span></span>
-<span id="cb46-15"><a href="#cb46-15" aria-hidden="true" tabindex="-1"></a>        logger.info(<span class="st">&quot;maxdif of </span><span class="sc">%f</span><span class="st">&quot;</span>, maxdif)</span>
-<span id="cb46-16"><a href="#cb46-16" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> converged:</span>
-<span id="cb46-17"><a href="#cb46-17" aria-hidden="true" tabindex="-1"></a>            logger.info(<span class="st">&quot;Converged after </span><span class="sc">%u</span><span class="st"> iteration&quot;</span>, <span class="bu">len</span>(<span class="va">self</span>.history))</span>
-<span id="cb46-18"><a href="#cb46-18" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> converged</span></code></pre></div>
-</div>
-<div class="named-code-block">
-<p>«example-mpi-main»</p>
-<div class="sourceCode" id="cb47"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a>archive <span class="op">=</span> Path(<span class="st">&quot;./output/parareal&quot;</span>)</span>
-<span id="cb47-2"><a href="#cb47-2" aria-hidden="true" tabindex="-1"></a>p <span class="op">=</span> Parareal(</span>
-<span id="cb47-3"><a href="#cb47-3" aria-hidden="true" tabindex="-1"></a>    client,</span>
-<span id="cb47-4"><a href="#cb47-4" aria-hidden="true" tabindex="-1"></a>    <span class="kw">lambda</span> n: Coarse(n, system).solution,</span>
-<span id="cb47-5"><a href="#cb47-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">lambda</span> n: Fine(archive, <span class="st">&quot;fine&quot;</span>, n, system, H).solution)</span>
-<span id="cb47-6"><a href="#cb47-6" aria-hidden="true" tabindex="-1"></a>jobs <span class="op">=</span> p.schedule(LiteralExpr(y0), t)</span>
-<span id="cb47-7"><a href="#cb47-7" aria-hidden="true" tabindex="-1"></a>history <span class="op">=</span> History(archive)</span>
-<span id="cb47-8"><a href="#cb47-8" aria-hidden="true" tabindex="-1"></a>p.wait(jobs, history.convergence_test)</span></code></pre></div>
-</div>
+</section>
 </section>
 </section>
         </div>
@@ -994,8 +1003,9 @@
                                 <li><a href="#example-using-hdf5-and-mpi-and-dask-futures">Example: using HDF5 and MPI and Dask futures</a>
                                 <ul>
                                 <li><a href="#best-practices">Best practices</a></li>
-                                <li><a href="#dask-with-mpi">Dask with MPI</a></li>
                                 <li><a href="#vector-arithmetic-expressions">Vector Arithmetic Expressions</a></li>
+                                <li><a href="#the-coarse-and-fine-solvers">The coarse and fine solvers</a></li>
+                                <li><a href="#keeping-track-of-convergence">Keeping track of convergence</a></li>
                                 <li><a href="#running-the-harmonic-oscillator">Running the harmonic oscillator</a></li>
                                 </ul></li>
                                 </ul>

@@ -6,28 +6,27 @@ import numpy as np
 from pathlib import Path
 from dataclasses import dataclass, field
 from typing import (Union, Callable, Optional, Any, Iterator)
+import logging
 
 # ~\~ begin <<lit/03-using-hdf5-and-mpi.md|example-mpi-imports>>[init]
-from dask_mpi import initialize  # type: ignore
-from dask.distributed import Client  # type: ignore
-# ~\~ end
-# ~\~ begin <<lit/03-using-hdf5-and-mpi.md|example-mpi-imports>>[1]
 import operator
 from functools import partial
 import h5py as h5  # type: ignore
 from abc import (ABC, abstractmethod)
 # ~\~ end
+# ~\~ begin <<lit/03-using-hdf5-and-mpi.md|example-mpi-imports>>[1]
+import dask
+# from dask_mpi import initialize  # type: ignore
+from dask.distributed import Client  # type: ignore
+# ~\~ end
 # ~\~ begin <<lit/03-using-hdf5-and-mpi.md|example-mpi-imports>>[2]
 from parareal.futures import (Parareal)
 
 from parareal.forward_euler import forward_euler
-# from pintFoam.parareal.iterate_solution import iterate_solution
 from parareal.tabulate_solution import tabulate
 from parareal.harmonic_oscillator import (underdamped_solution, harmonic_oscillator)
 
 import math
-# from uuid import uuid4
-import logging
 # ~\~ end
 # ~\~ begin <<lit/03-using-hdf5-and-mpi.md|vector-expressions>>[init]
 class Vector(ABC):
@@ -196,22 +195,17 @@ def main(log: str = "WARNING", log_file: Optional[str] = None,
         raise ValueError(f"Invalid log level `{log}`")
     logging.basicConfig(level=log_level, filename=log_file)
     # ~\~ begin <<lit/03-using-hdf5-and-mpi.md|example-mpi-main>>[init]
-    initialize()
-    client = Client()
+    # initialize()
+    client = Client(n_workers=4, threads_per_worker=1)
     # ~\~ end
     # ~\~ begin <<lit/03-using-hdf5-and-mpi.md|example-mpi-main>>[1]
     system = harmonic_oscillator(OMEGA0, ZETA)
-    # ~\~ end
-    # ~\~ begin <<lit/03-using-hdf5-and-mpi.md|example-mpi-main>>[2]
     y0 = np.array([1.0, 0.0])
     t = np.linspace(0.0, 15.0, 20)
     archive = Path("./output/euler")
-    underdamped_solution(OMEGA0, ZETA)(t)
     tabulate(Fine(archive, "fine", 0, system, H).solution, LiteralExpr(y0), t)
-
-    # euler_files = archive.glob("*.h5")
     # ~\~ end
-    # ~\~ begin <<lit/03-using-hdf5-and-mpi.md|example-mpi-main>>[3]
+    # ~\~ begin <<lit/03-using-hdf5-and-mpi.md|example-mpi-main>>[2]
     archive = Path("./output/parareal")
     p = Parareal(
         client,
@@ -220,6 +214,8 @@ def main(log: str = "WARNING", log_file: Optional[str] = None,
     jobs = p.schedule(LiteralExpr(y0), t)
     history = History(archive)
     p.wait(jobs, history.convergence_test)
+
+    client.shutdown()
     # ~\~ end
 
 if __name__ == "__main__":

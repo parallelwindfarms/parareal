@@ -81,7 +81,7 @@ class Parareal:
             result = self.client.gather(jobs[i])
             if convergence_test(result):
                 for j in jobs[i+1:]:
-                    self.client.cancel(j)
+                    self.client.cancel(j, force=True)
                 return result
         return result
     # ~\~ end
