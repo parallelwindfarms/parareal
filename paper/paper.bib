@@ -1,0 +1,158 @@
+@article{Lions2001,
+abstract = {The purpose of this Note is to propose a time discretization of a partial differential evolution equation that allows for parallel implementations. The method, based on an Euler scheme, combines coarse resolutions and independent fine resolutions in time in the same spirit as standard spacial approximations. The resulting parallel implementation is done in the non standard time direction. Its main goal concerns real time problems, hence the proposed terminology of "parareal" algorithm. {\textcopyright} 2001 Acad{\'{e}}mie des sciences/{\'{E}}ditions scientifiques et m{\'{e}}dicales Elsevier SAS.},
+author = {Lions, Jacques Louis and Maday, Yvon and Turinici, Gabriel},
+doi = {10.1016/S0764-4442(00)01793-6},
+issn = {0764-4442},
+journal = {Comptes Rendus de l'Acad{\'{e}}mie des Sciences - Series I - Mathematics},
+month = {apr},
+number = {7},
+pages = {661--668},
+publisher = {Elsevier Masson},
+title = {{R{\'{e}}solution d'EDP par un sch{\'{e}}ma en temps «parar{\'{e}}el»}},
+volume = {332},
+year = {2001}
+}
+
+@article{Eghbal2017,
+title = {Acceleration of unsteady hydrodynamic simulations using the parareal algorithm},
+journal = {Journal of Computational Science},
+volume = {19},
+pages = {57-76},
+year = {2017},
+issn = {1877-7503},
+doi = {https://doi.org/10.1016/j.jocs.2016.12.006},
+url = {https://www.sciencedirect.com/science/article/pii/S1877750316304987},
+author = {Araz Eghbal and Andrew G. Gerber and Eric Aubanel},
+keywords = {Parareal, Domain decomposition, Vortex shedding, RANS, DES, LES, GPGPU},
+abstract = {The parareal algorithm is used to obtain temporal parallelization added to the parallelism obtained from the conventional spatial domain decomposition techniques for hydrodynamic problems. Parareal solution becomes unstable at high Reynolds numbers where the non-linear convection term in the Navier–Stokes equations becomes much larger than the diffusion term. A new framework that allows using parareal for unsteady high Reynolds number hydrodynamic problems is proposed where parareal coarse and fine time integration operators are incorporated with coarse and fine spatial grids respectively and RANS or DES turbulence models are employed with a blended filter that can be tuned for the stability of the method. This framework is composed of three solution stages where parareal serves as a transitional stage that bridges a coarse grid solution to a fine grid one. While in lower Reynolds number problems parareal solution can serve as a final solution, in higher Reynolds number problems with high degree of non-linearity parareal provides a shorter path to the final solution. Anticipating a parareal stage in a transitional sense allows a looser convergence requirement which leads to high speedup gains in that stage. On the other hand improved initial values at the beginning of the last stage yields a shorter final fine stage solution. A windowing technique is employed in this methodology to further control the parareal instabilities by keeping the parareal corrections smaller while still being able to cover an arbitrary simulation time with given computational resources. Application of this methodology has been illustrated with a fully turbulent vortex shedding from a cylinder and a flow from the Grand Passage tidal zone in the Bay of Fundy. It is concluded that a tuned turbulence model may sufficiently stabilize the parareal methodology for many practical problems such that it becomes applicable in the initialization process if not accurate enough as a final solution. MPI and OpenMP programming paradigms are used for temporal parallelism introduced by parareal and data parallelism obtained via spatial domain decomposition methods respectively. Also all computational tasks are accelerated using CUDA compatible GPGPUs.}
+}
+
+@software{byteparsing2021,
+author = {Hidding, Johan and Rodríguez-Sánchez, Pablo},
+doi = {10.5281/zenodo.4734115},
+license = {Apache-2.0},
+month = {5},
+title = {{byteparsing}},
+url = {https://github.com/parallelwindfarms/byteparsing},
+version = {0.1.0},
+year = {2021}
+}
+
+@book{kundu2010,
+  title={Fluid Mechanics},
+  author={Kundu, P.K. and Cohen, I.M.},
+  isbn={9780123814005},
+  lccn={2007042765},
+  url={https://books.google.nl/books?id=d9B5NElxUKwC},
+  year={2010},
+  publisher={Elsevier Science}
+}
+
+@article{openfoam,
+   abstract = {In this article the principles of the field operation and manipulation (FOAM) C++ class library for continuum mechanics are outlined. Our intention is to make it as easy as possible to develop reli...},
+   author = {H. G. Weller and G. Tabor and H. Jasak and C. Fureby},
+   doi = {10.1063/1.168744},
+   issn = {0894-1866},
+   issue = {6},
+   journal = {Computers in Physics},
+   keywords = {abstract data types,continuum mechanics,external flows,magnetohydrodynamics,object-oriented programming,partial differential equations,physics computing,software libraries,tensors,turbulence},
+   month = {12},
+   pages = {620},
+   publisher = {American Institute of PhysicsAIP},
+   title = {A tensorial approach to computational continuum mechanics using object-oriented techniques},
+   volume = {12},
+   url = {https://aip.scitation.org/doi/abs/10.1063/1.168744},
+   year = {1998},
+}
+
+@book{knuth1992,
+  title={Literate Programming},
+  author={Knuth, D.E.},
+  isbn={9780937073810},
+  lccn={lc91039510},
+  series={Center for the Study of Language and Information Publication Lecture Notes},
+  url={https://books.google.nl/books?id=vovpQgAACAAJ},
+  year={1992},
+  publisher={Cambridge University Press}
+}
+
+@misc{chue_hong_neil_p_2022_6623556,
+  author       = {Chue Hong, Neil P. and
+                  Katz, Daniel S. and
+                  Barker, Michelle and
+                  Lamprecht, Anna-Lena and
+                  Martinez, Carlos and
+                  Psomopoulos, Fotis E. and
+                  Harrow, Jen and
+                  Castro, Leyla Jael and
+                  Gruenpeter, Morane and
+                  Martinez, Paula Andrea and
+                  Honeyman, Tom and
+                  Struck, Alexander and
+                  Lee, Allen and
+                  Loewe, Axel and
+                  van Werkhoven, Ben and
+                  Jones, Catherine and
+                  Garijo, Daniel and
+                  Plomp, Esther and
+                  Genova, Francoise and
+                  Shanahan, Hugh and
+                  Leng, Joanna and
+                  Hellström, Maggie and
+                  Sandström, Malin and
+                  Sinha, Manodeep and
+                  Kuzak, Mateusz and
+                  Herterich, Patricia and
+                  Zhang, Qian and
+                  Islam, Sharif and
+                  Sansone, Susanna-Assunta and
+                  Pollard, Tom and
+                  Atmojo, Udayanto Dwi and
+                  Williams, Alan and
+                  Czerniak, Andreas and
+                  Niehues, Anna and
+                  Fouilloux, Anne Claire and
+                  Desinghu, Bala and
+                  Goble, Carole and
+                  Richard, Céline and
+                  Gray, Charles and
+                  Erdmann, Chris and
+                  Nüst, Daniel and
+                  Tartarini, Daniele and
+                  Ranguelova, Elena and
+                  Anzt, Hartwig and
+                  Todorov, Ilian and
+                  McNally, James and
+                  Moldon, Javier and
+                  Burnett, Jessica and
+                  Garrido-Sánchez, Julián and
+                  Belhajjame, Khalid and
+                  Sesink, Laurents and
+                  Hwang, Lorraine and
+                  Tovani-Palone, Marcos Roberto and
+                  Wilkinson, Mark D. and
+                  Servillat, Mathieu and
+                  Liffers, Matthias and
+                  Fox, Merc and
+                  Miljković, Nadica and
+                  Lynch, Nick and
+                  Martinez Lavanchy, Paula and
+                  Gesing, Sandra and
+                  Stevens, Sarah and
+                  Martinez Cuesta, Sergio and
+                  Peroni, Silvio and
+                  Soiland-Reyes, Stian and
+                  Bakker, Tom and
+                  Rabemanantsoa, Tovo and
+                  Sochat, Vanessa and
+                  Yehudi, Yo and
+                  RDA FAIR4RS WG},
+  title        = {{FAIR Principles for Research Software (FAIR4RS 
+                   Principles)}},
+  month        = may,
+  year         = 2022,
+  publisher    = {Zenodo},
+  version      = {1.0},
+  doi          = {10.15497/RDA00068},
+  url          = {https://doi.org/10.15497/RDA00068}
+}
