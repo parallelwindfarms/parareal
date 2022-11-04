@@ -1,6 +1,35 @@
 on: [push]
 
 jobs:
+  install:
+    runs-on: ubuntu-latest
+    name: Test package installation
+    steps:
+    - name: Checkout this
+      id: checkout-this
+      uses: actions/checkout@v2
+
+    - name: Install packages
+      id: install-packages
+      run: |
+        sudo apt-get install -y python3.9 python3-pip python3-testresources
+
+    - name: Install poetry
+      id: install-poetry
+      run: |
+        pip install --user poetry
+
+    - name: Create env
+      id: create-env
+      run: |
+        poetry install -v
+
+    - name: Run tests
+      id: run-tests
+      run: |
+        poetry run pytest
+      shell: bash
+
   openfoam_job:
     runs-on: ubuntu-latest
     name: A job to test OpenFOAM
