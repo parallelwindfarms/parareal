@@ -62,10 +62,10 @@ Runge-Kutta algorithm, are not suitable for parallelization. The reason
 for this is that each integration step fundamentally depends on the
 previous one, making it an inherently serial process. But as we'll see
 in section [2.1](#subsec:parareal){reference-type="ref"
-reference="subsec:parareal"}, the Parareal algorithm provides a solver
-that allows parallelization in the time domain. Under certain
-circumstances, the Parareal algorithm leads to a computational
-advantage.
+reference="subsec:parareal"}, the Parareal algorithm [@Lions2001] provides a solver
+that allows parallelization in the time domain. The Parareal algorithm 
+is known to lead to a computational advantage under certain circumstances 
+[@AUBANEL2011172].
 
 ## Our contribution
 
@@ -120,8 +120,6 @@ $\mathcal{F}(y^k_j, t_j, t_{j+1})$ can be performed in parallel on a
 number of processing units. By contrast, the dependency of
 $y^{k+1}_{j+1}$ on $\mathcal{G}(y^{k+1}_j, t_j, t_{j+1})$ means that the
 coarse correction has to be computed in serial order (see \autoref{fig:parareal}).
-
-<!-- ![image.\label{fig:parareal}](figs/parareal.pdf){width="\\textwidth"} -->
 
 \begin{figure}
 \begin{center}

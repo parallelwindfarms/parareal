@@ -1,4 +1,5 @@
 @article{Lions2001,
+title = {{R{\'{e}}solution d'EDP par un sch{\'{e}}ma en temps «parar{\'{e}}el»}},
 abstract = {The purpose of this Note is to propose a time discretization of a partial differential evolution equation that allows for parallel implementations. The method, based on an Euler scheme, combines coarse resolutions and independent fine resolutions in time in the same spirit as standard spacial approximations. The resulting parallel implementation is done in the non standard time direction. Its main goal concerns real time problems, hence the proposed terminology of "parareal" algorithm. {\textcopyright} 2001 Acad{\'{e}}mie des sciences/{\'{E}}ditions scientifiques et m{\'{e}}dicales Elsevier SAS.},
 author = {Lions, Jacques Louis and Maday, Yvon and Turinici, Gabriel},
 doi = {10.1016/S0764-4442(00)01793-6},
@@ -8,9 +9,23 @@ month = {apr},
 number = {7},
 pages = {661--668},
 publisher = {Elsevier Masson},
-title = {{R{\'{e}}solution d'EDP par un sch{\'{e}}ma en temps «parar{\'{e}}el»}},
 volume = {332},
 year = {2001}
+}
+
+@article{AUBANEL2011172,
+  title    = {Scheduling of tasks in the parareal algorithm},
+  journal  = {Parallel Computing},
+  volume   = {37},
+  number   = {3},
+  pages    = {172-182},
+  year     = {2011},
+  issn     = {0167-8191},
+  doi      = {10.1016/j.parco.2010.10.004},
+  url      = {https://www.sciencedirect.com/science/article/pii/S0167819110001419},
+  author   = {Eric Aubanel},
+  keywords = {Parareal algorithm, Time parallelization, Numerical solution of PDEs},
+  abstract = {Parallelization of partial differential equations (PDEs) by time decomposition has attracted much interest, mainly due to its potential to enable very long time simulations beyond what is possible using spatial domain decomposition. However, there has only been limited performance analysis of the parareal algorithm in the literature, ignoring the efficient scheduling of tasks. This paper presents a detailed study of the scheduling of tasks in the parareal algorithm that achieves significantly better efficiency than the usual algorithm. Two algorithms are proposed, one which uses a manager–worker paradigm with overlap of sequential and parallel phases, and a second that is completely distributed. Experiments were conducted with the 2D heat equation. It was found that the rate of convergence decreases as the number of processors increases, in the case of strong scaling (fixed time interval). However, for weak scaling results the rate of convergence was unaffected by the number of processors. The results of this paper suggest that the parareal algorithm is a promising approach to solving long time evolution problems, particularly when the goal is simulation of longer times using more processors. It also exhibits characteristics that make it particularly suitable for execution on heterogeneous computational grids, such as low communication overhead and easy accommodation of different processor and network speeds.}
 }
 
 @article{Eghbal2017,
