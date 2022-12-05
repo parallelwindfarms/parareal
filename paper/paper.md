@@ -96,8 +96,9 @@ precise in general than the fine one.
 
 The Parareal method is defined by the following iteration:
 
-$$y_{j+1}^{k+1} = \mathcal{G}(y^{k+1}_j, t_j, t_{j+1}) + \mathcal{F}(y^k_j, t_j, t_{j+1}) - \mathcal{G}(y^k_j, t_j, t_{j+1}),
-\label{eq:parareal}$$
+\begin{equation}\label{eq:parareal}
+y_{j+1}^{k+1} = \mathcal{G}(y^{k+1}_j, t_j, t_{j+1}) + \mathcal{F}(y^k_j, t_j, t_{j+1}) - \mathcal{G}(y^k_j, t_j, t_{j+1})
+\end{equation}
 
 where $j$ and $k$ are integer indices. $j$ is the corresponding index
 for the time discretization $t_j$, while $k$ denotes the iteration
@@ -106,9 +107,8 @@ number of Parareal (see figure
 reference="fig:parareal"}).
 
 As the iteration converges, we expect that
-$y^{k+1}_j - y^{k}_j \rightarrow 0$. From equation
-[\[eq:parareal\]](#eq:parareal){reference-type="ref"
-reference="eq:parareal"}, it follows that
+$y^{k+1}_j - y^{k}_j \rightarrow 0$. From
+\autoref{eq:parareal}, it follows that
 $y^{k+1}_j  \rightarrow \mathcal{F}(y^k_j, t_j, t_{j+1})$ for large
 enough $k$, as both instances of $\mathcal{G}$ cancel out. This means
 that Parareal converges to the same solution as the fine integrator.
@@ -117,9 +117,7 @@ that Parareal converges to the same solution as the fine integrator.
 
 If Parareal's algorithm converges to the same solution as the fine
 integrator, why not directly use the latter? The reason is subtle: with
-the algorithm split like in equation
-[\[eq:parareal\]](#eq:parareal){reference-type="ref"
-reference="eq:parareal"}, the computationally expensive evaluation of
+the algorithm split like in \autoref{eq:parareal}, the computationally expensive evaluation of
 $\mathcal{F}(y^k_j, t_j, t_{j+1})$ can be performed in parallel on a
 number of processing units. By contrast, the dependency of
 $y^{k+1}_{j+1}$ on $\mathcal{G}(y^{k+1}_j, t_j, t_{j+1})$ means that the
@@ -148,8 +146,7 @@ that the coarse integrator works on a coarser mesh than the fine
 integrator.
 
 In order to perform the field additions and subtractions required by
-equation [\[eq:parareal\]](#eq:parareal){reference-type="ref"
-reference="eq:parareal"}, we need to map the fields between the coarse
+\autoref{eq:parareal}, we need to map the fields between the coarse
 and fine meshes. To this goal, we used interpolation. In particular,
 OpenFOAM ships with a utility called `mapFields` that solves this
 regridding problem efficiently. Our solution builds a wrapper around
@@ -173,8 +170,7 @@ windowing, and was also used by @Eghbal2017.
 We implemented Parareal in Python and used Dask for orchestrating the
 parallel execution. The Parareal algorithm itself has a straightforward
 implementation. The recursive definition of Parareal
-(equation [\[eq:parareal\]](#eq:parareal){reference-type="ref"
-reference="eq:parareal"}) translates into the following Python code for
+(\autoref{eq:parareal}) translates into the following Python code for
 a single iteration:
 
 ``` {.python language="Python"}
