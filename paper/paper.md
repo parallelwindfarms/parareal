@@ -102,9 +102,7 @@ y_{j+1}^{k+1} = \mathcal{G}(y^{k+1}_j, t_j, t_{j+1}) + \mathcal{F}(y^k_j, t_j, t
 
 where $j$ and $k$ are integer indices. $j$ is the corresponding index
 for the time discretization $t_j$, while $k$ denotes the iteration
-number of Parareal (see figure
-[\[fig:parareal\]](#fig:parareal){reference-type="ref"
-reference="fig:parareal"}).
+number of Parareal (see \autoref{fig:parareal}).
 
 As the iteration converges, we expect that
 $y^{k+1}_j - y^{k}_j \rightarrow 0$. From
@@ -121,12 +119,48 @@ the algorithm split like in \autoref{eq:parareal}, the computationally expensive
 $\mathcal{F}(y^k_j, t_j, t_{j+1})$ can be performed in parallel on a
 number of processing units. By contrast, the dependency of
 $y^{k+1}_{j+1}$ on $\mathcal{G}(y^{k+1}_j, t_j, t_{j+1})$ means that the
-coarse correction has to be computed in serial order (see figure
-[\[fig:parareal\]](#fig:parareal){reference-type="ref"
-reference="fig:parareal"}).
+coarse correction has to be computed in serial order (see \autoref{fig:parareal}).
 
-::: center
-:::
+<!-- ![image.\label{fig:parareal}](figs/parareal.pdf){width="\\textwidth"} -->
+
+\begin{figure}
+\begin{center}
+\begin{tikzpicture}
+	% Grid
+  	\draw[thin,gray!40] (-0.25,-0.25) grid (4.0,3.5);
+
+  	% Axes
+    \draw[<->] (0,0)--(4.5, 0) node[right]{$j$};
+  	\draw[<->] (0,0)--(0, 3.5) node[above]{$k$};
+  	
+  	% Initial conditions
+  	\filldraw [blue!40] (0,0) circle (4pt);
+  	\filldraw [blue!40] (0,1) circle (4pt);
+  	\filldraw [blue!40] (0,2) circle (4pt);
+  	\filldraw [blue!40] (0,3) circle (4pt);
+  	
+  	% First coarse integration
+  	\filldraw [red!40] (1,0) circle (4pt);
+  	\filldraw [red!40] (2,0) circle (4pt);
+  	\filldraw [red!40] (3,0) circle (4pt);
+  	\filldraw [red!40] (4,0) circle (4pt);
+
+	% Iterator
+  	\draw[->, ultra thick, red,  arrows={-latex}]  (2,2) -- (1,2) node[midway,above] {$\mathcal{G}$};
+  	\draw[->, ultra thick, red,  arrows={-latex}]  (2,2) -- (1,1) node[below] {$\mathcal{F-G}$};
+  	\filldraw [color=red, fill=white] (2,2) circle (4pt);
+  	
+\end{tikzpicture}
+\end{center}
+\caption{\label{fig:parareal} Discretization diagram corresponding to equation \ref{eq:parareal}. 
+The $j$ index corresponds to each value of time $t_j$. The $k$ index corresponds to each iteration of Parareal. 
+The blue dots at $j=0$ correspond to the initial condition; all of them are identical and are provided as part of the problem definition.
+The red dots at $k=0$ are obtained by applying the coarse integrator $\mathcal{G}$ once.
+The discretization diagram, in red, indicates that the computation of $y^k_{j+1}$ requires both $y^{k-1}_{j}$ and $y^k_{j}$ as an input.
+Visualized like this, it is apparent that sweeping the integrator first horizontally and then vertically, we can compute all the values of $y^k_j$.
+Note that the contribution of the fine, computationally-expensive integrator $\mathcal{F}$ involves only the values calculated in the previous iteration, and can thus be computed in parallel by assigning a node to each time window.
+}
+\end{figure}
 
 ## Convergence criterion {#subsec:convergence}
 
@@ -264,12 +298,9 @@ def coarse(n, x, t_0, t_1):
 By providing the `parareal` function with Dask delayed functions, we
 automatically build a workflow of the algorithm, ready for parallel
 execution. Passing these functions to `parareal` gives us the workflow
-shown in
-Figure [\[fig:parareal-graph\]](#fig:parareal-graph){reference-type="ref"
-reference="fig:parareal-graph"}.
+shown in \autoref{fig:parareal-graph}.
 
-[]{#fig:parareal-graph label="fig:parareal-graph"}
-![image](figs/parareal-graph.pdf){width="\\textwidth"}
+![image.\label{fig:parareal-graph}](figs/parareal-graph.pdf){width="\\textwidth"}
 
 -   Python + Dask
 
