@@ -184,6 +184,7 @@ OpenFOAM ships with a utility called `mapFields` that solves this
 regridding problem efficiently. Our solution builds a wrapper around
 this function.
 
+<!-- TODO: consider removing -->
 ## Windowing
 
 Parareal can give a speedup related to the number of nodes being used.
@@ -224,7 +225,7 @@ fine-to-coarse grid interpolators used for regridding. Note that here
 ${\tt y}$ is the list of states from a previous iteration of Parareal,
 and ${\tt y_n}$ is the *next* iteration.
 
-By feeding the algorithm Dask delayed functions, a workflow is
+By feeding the algorithm Dask delayed functions, a workflow is <!-- TODO: Consider adding a citation to Dask delayed functions-- > 
 automatically generated for parallel execution on any number of
 back-ends.
 
@@ -272,6 +273,10 @@ Cloning a vector amounts to copying the basic folder structure of an
 OpenFOAM case directory, together with the time directory containing the
 field values for that snapshot.
 
+<!-- TODO: if I understand properly, we can generalize this to other
+methods than OpenFOAM just by using other integrators. If I'm right,
+it could be a good idea to highlight this fact in the introduction
+or even in the title -->
 ## Integrators
 
 We need to provide two integrators to the `parareal` function, along
@@ -306,6 +311,7 @@ shown in \autoref{fig:parareal-graph}.
 
 -   Dependency graph
 
+<!-- TODO: consider removing -->
 # Discussion and performance
 
 -   Setup
@@ -314,6 +320,7 @@ shown in \autoref{fig:parareal-graph}.
 
 -   Parareal
 
+<!-- TODO: consider keeping only one example -->
 ## Test problem 1: 2D laminar flow inside a pipe
 
 Our first case study will be that of a two-dimensional laminar flow
