@@ -326,6 +326,11 @@ cylinder. Contrary to the first test problem, the flow around a cylinder
 doesn't converge to a stationary solution if the Reynolds' number is
 high enough.
 
+# Acknowledgements
+This project was supported by funding from the Netherlands eScience Center and NWO as part of the Joint Call for Energy Research, Project Number CSER.JCER.025. We also want to acknowledge Dr. Nicolas Renaud for his support and suggestions.
+
+# References
+
 [^1]: Acronym for \"Open-source Field Operation And Manipulation\"
 
 [^2]: There is also premature support for the Adios2 file format that is
