@@ -61,8 +61,7 @@ Classical numerical solvers for dynamical systems, such as the
 Runge-Kutta algorithm, are not suitable for parallelization. The reason
 for this is that each integration step fundamentally depends on the
 previous one, making it an inherently serial process. But as we'll see
-in section [2.1](#subsec:parareal){reference-type="ref"
-reference="subsec:parareal"}, the Parareal algorithm [@Lions2001] provides a solver
+below, the Parareal algorithm [@Lions2001] provides a solver
 that allows parallelization in the time domain. The Parareal algorithm 
 is known to lead to a computational advantage under certain circumstances 
 [@AUBANEL2011172].
@@ -166,8 +165,7 @@ The minimum acceptable number of iterations of the Parareal algorithm
 can in general not be known in advance. The only feasible general
 approach is to provide a tolerance, and the iteration stops when
 reached. This poses a technical problem to the implementation (see
-subsection [3.3](#subsec:futures){reference-type="ref"
-reference="subsec:futures"}).
+more on subsection about Dask).
 
 ## Regridding
 
@@ -252,9 +250,7 @@ parsing problems, and we published it independently [@byteparsing2021].
 
 ## Dask. Futures vs. promises {#subsec:futures}
 
-As explained in subsection
-[2.3](#subsec:convergence){reference-type="ref"
-reference="subsec:convergence"}, the stop criterion of our algorithm
+As explained in the subsection about convergence, the stop criterion of our algorithm
 relies on a tolerance being met. This means that at some point the
 partial results of all cores have to be collected in order to check if
 the tolerance has been already met, and if that's the case, stop
