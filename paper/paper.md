@@ -30,7 +30,7 @@ bibliography: paper.bib
 
 ## Computational Fluid Dynamics
 
-Computational Fluid Dynamics (CFD) is a branch of physics that uses
+Computational Fluid Dynamics is a branch of physics that uses
 computational methods such as numerical analysis to address problems
 involving fluid flows. Examples of these problems could be aerodynamics,
 weather simulation, acoustics, heat transfer or environmental
