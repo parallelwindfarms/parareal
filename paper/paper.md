@@ -69,8 +69,9 @@ is known to lead to a computational advantage under certain circumstances
 ## Our contribution
 
 The present work introduces the software solution we developed in order
-to apply the Parareal algorithm to calculations with OpenFOAM in a
-practical way. In order to attract an audience as big as possible, we
+to apply the Parareal algorithm to any numerical solver in a practical way.
+We focus our attention in calculations with OpenFOAM.
+In order to attract an audience as big as possible, we
 decided to write it in Python, an open-source language with a large and
 active users' community. We made it suitable for running on
 supercomputers. And last but not least, we followed not only the
