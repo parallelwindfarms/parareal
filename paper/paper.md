@@ -235,9 +235,9 @@ of computational fluid dynamics problems [@openfoam]. It is free, open
 source, and has a large user base across different areas of science and
 technology.
 
-## Input/Output
+### Input/Output
 
-OpenFOAM has support for two types of direct output. One is an ASCII
+OpenFOAM supports two types of direct output. One is an ASCII
 format with a syntax inherited from C. The other is the same ASCII
 format, but with larger data blocks replaced by binary blobs[^2].
 
@@ -269,11 +269,6 @@ first and then modify the field values of the cloned instance in place.
 Cloning a vector amounts to copying the basic folder structure of an
 OpenFOAM case directory, together with the time directory containing the
 field values for that snapshot.
-
-<!-- TODO: if I understand properly, we can generalize this to other
-methods than OpenFOAM just by using other integrators. If I'm right,
-it could be a good idea to highlight this fact in the introduction
-or even in the title -->
 ## Integrators
 
 We need to provide two integrators to the `parareal` function, along
@@ -337,6 +332,7 @@ This project was supported by funding from the Netherlands eScience Center and N
 
 [^1]: Acronym for \"Open-source Field Operation And Manipulation\"
 
+<!-- TODO: Consider removing -->
 [^2]: There is also premature support for the Adios2 file format that is
     better suited for HPC applications. However, the support for Adios
     is not yet mature enough for general adoption.
