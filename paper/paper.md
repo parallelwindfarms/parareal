@@ -172,9 +172,9 @@ more on subsection about Dask).
 
 The Parareal algorithm assumes the existence of a cheap but reasonably
 accurate *coarse* integrator alongside a more computationally expensive
-*fine* integrator. In practice, due to the Courant–Friedrichs–Lewy condition,
-this means that the coarse integrator works on a coarser mesh than the fine
-integrator.
+*fine* integrator. In practice this means that the coarse integrator
+works on a coarser mesh than the fine integrator (for details, see
+Courant–Friedrichs–Lewy condition, often referred to as CFL).
 
 In order to perform the field additions and subtractions required by
 \autoref{eq:parareal}, we need to map the fields between the coarse
@@ -250,7 +250,7 @@ inside. Our module is general enough to be able to tackle generic
 parsing problems, and we published it independently [@byteparsing2021].
 
 ## Dask. Futures vs. promises {#subsec:futures}
-
+<!-- TODO: either complete or remove this section -->
 As explained in the subsection about convergence, the stop criterion of our algorithm
 relies on a tolerance being met. This means that at some point the
 partial results of all cores have to be collected in order to check if
