@@ -172,8 +172,8 @@ more on subsection about Dask).
 
 The Parareal algorithm assumes the existence of a cheap but reasonably
 accurate *coarse* integrator alongside a more computationally expensive
-*fine* integrator. In practice, due to the CFL condition, this means
-that the coarse integrator works on a coarser mesh than the fine
+*fine* integrator. In practice, due to the Courant–Friedrichs–Lewy condition,
+this means that the coarse integrator works on a coarser mesh than the fine
 integrator.
 
 In order to perform the field additions and subtractions required by
