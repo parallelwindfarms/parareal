@@ -76,8 +76,9 @@ is known to lead to a computational advantage under certain circumstances
 ## Our contribution
 
 The present work introduces the software solution we developed in order
-to apply the Parareal algorithm to calculations with OpenFOAM in a
-practical way. In order to attract an audience as big as possible, we
+to apply the Parareal algorithm to any numerical solver in a practical way.
+We focus our attention in calculations with OpenFOAM.
+In order to attract an audience as big as possible, we
 decided to write it in Python, an open-source language with a large and
 active users' community. We made it suitable for running on
 supercomputers. And last but not least, we followed not only the
@@ -178,9 +179,9 @@ more on subsection about Dask).
 
 The Parareal algorithm assumes the existence of a cheap but reasonably
 accurate *coarse* integrator alongside a more computationally expensive
-*fine* integrator. In practice, due to the CFL condition, this means
-that the coarse integrator works on a coarser mesh than the fine
-integrator.
+*fine* integrator. In practice this means that the coarse integrator
+works on a coarser mesh than the fine integrator (for details, see
+Courant–Friedrichs–Lewy condition, often referred to as CFL).
 
 In order to perform the field additions and subtractions required by
 \autoref{eq:parareal}, we need to map the fields between the coarse
@@ -241,9 +242,9 @@ of computational fluid dynamics problems [@openfoam]. It is free, open
 source, and has a large user base across different areas of science and
 technology.
 
-## Input/Output
+### Input/Output
 
-OpenFOAM has support for two types of direct output. One is an ASCII
+OpenFOAM supports two types of direct output. One is an ASCII
 format with a syntax inherited from C. The other is the same ASCII
 format, but with larger data blocks replaced by binary blobs[^2].
 
@@ -256,7 +257,7 @@ inside. Our module is general enough to be able to tackle generic
 parsing problems, and we published it independently [@byteparsing2021].
 
 ## Dask. Futures vs. promises {#subsec:futures}
-
+<!-- TODO: either complete or remove this section -->
 As explained in the subsection about convergence, the stop criterion of our algorithm
 relies on a tolerance being met. This means that at some point the
 partial results of all cores have to be collected in order to check if
@@ -275,11 +276,6 @@ first and then modify the field values of the cloned instance in place.
 Cloning a vector amounts to copying the basic folder structure of an
 OpenFOAM case directory, together with the time directory containing the
 field values for that snapshot.
-
-<!-- TODO: if I understand properly, we can generalize this to other
-methods than OpenFOAM just by using other integrators. If I'm right,
-it could be a good idea to highlight this fact in the introduction
-or even in the title -->
 ## Integrators
 
 We need to provide two integrators to the `parareal` function, along
@@ -343,6 +339,7 @@ This project was supported by funding from the Netherlands eScience Center and N
 
 [^1]: Acronym for \"Open-source Field Operation And Manipulation\"
 
+<!-- TODO: Consider removing -->
 [^2]: There is also premature support for the Adios2 file format that is
     better suited for HPC applications. However, the support for Adios
     is not yet mature enough for general adoption.
