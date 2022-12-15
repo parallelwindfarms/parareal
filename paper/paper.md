@@ -50,12 +50,19 @@ suites in this field.
 
 ## Parallelization of dynamical systems solvers
 
-Resource-consuming computational methods are often a synonym of slow
-calculations. Parallel computing, especially since the (relative)
+Problems in computational fluid dynamics are notorious for being highly compute intensive, both in terms of used memory and CPU utilization. Many attempts have been made to speed up computations by subdividing the work and distributing smaller jobs over many processors.
+
+Most accepted approaches for achieving parallel computation in CFD involve subdividing the domain into many components for which solving the system of equations are relatively independent. If we want to add more nodes to our computation, we need to subdivide the work in to smaller pieces. The problem is that with smaller sub-domains, the communication overhead increases, until adding more processors does not give any speed-up.
+
+Should we want to get our results faster, we need to look for alternative methods to speed up our calculations. One proposed method is to go parallel-in-time.
+
+<!-- ??? Resource-consuming computational methods are often a synonym of slow
+calculations. ???
+Parallel computing, especially since the (relative)
 popularization of supercomputers, can be of great help in reducing the
 computation time. But in order to get any advantage from
 parallelization, we need a parallelizable problem, *i.e.*, a problem
-that can be split into smaller, independent problems.
+that can be split into smaller, independent problems. -->
 
 Classical numerical solvers for dynamical systems, such as the
 Runge-Kutta algorithm, are not suitable for parallelization. The reason
