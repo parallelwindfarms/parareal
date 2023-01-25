@@ -119,6 +119,7 @@ developed a Python module for parsing the ASCII component of these files
 and have efficient memory mapped access to the binary field values
 inside. Our module is general enough to be able to tackle generic
 parsing problems, and we published it independently [@byteparsing2021].
+
 ## Vectors
 
 We define a `Vector` as an object that stores the complete state of the
@@ -131,34 +132,6 @@ first and then modify the field values of the cloned instance in place.
 Cloning a vector amounts to copying the basic folder structure of an
 OpenFOAM case directory, together with the time directory containing the
 field values for that snapshot.
-
-## Integrators
-
-We need to provide two integrators to the `parareal` function, along
-with two functions that can map vectors from a coarse to a fine grid and
-vice-versa. In this instance we have two integrators that both call the
-`pimpleFoam` executable, but with different time steps (and on different
-grids, but for clarity that is left out of this example):
-
-``` {.python language="Python"}
-from dask import delayed
-from pintFoam.foam import foam
-
-@delayed
-def fine(n, x, t_0, t_1):
-    return foam("pimpleFoam", 0.1, x, t_0, t_1)
-
-@delayed
-def coarse(n, x, t_0, t_1):
-    return foam("pimpleFoam", 1.0, x, t_0, t_1)
-```
-
-By providing the `parareal` function with Dask delayed functions, we
-automatically build a workflow of the algorithm, ready for parallel
-execution. Passing these functions to `parareal` gives us the workflow
-shown in \autoref{fig:parareal-graph}.
-
-![image.\label{fig:parareal-graph}](figs/parareal-graph.pdf){width="\\textwidth"}
 
 <!-- TODO: consider keeping only one example -->
 ## Test problem 1: 2D laminar flow inside a pipe
