@@ -110,6 +110,10 @@ See examples in next section.
 
 ## Input/Output in OpenFOAM
 
+We define a `Vector` as an object that stores the complete state of the
+simulation at any given time. OpenFOAM nativelly stores this information
+as a set of files on a folder structure.
+
 OpenFOAM supports two types of direct output. One is an ASCII
 format with a syntax inherited from C. The other is the same ASCII
 format, but with larger data blocks replaced by binary blobs.
@@ -120,18 +124,9 @@ and have efficient memory mapped access to the binary field values
 inside. Our module is general enough to be able to tackle generic
 parsing problems, and we published it independently [@byteparsing2021].
 
-## Vectors
-
-We define a `Vector` as an object that stores the complete state of the
-simulation at any given time. OpenFOAM nativelly stores this information
-as a set of files on a folder structure. For the purpose of Parareal we
-need to be able to add and subtract vectors. We implemented the class
-`Vector` for OpenFOAM snapshots by keeping every instance inside its own
-dedicated case folder. When we need to add two vectors, we clone the
-first and then modify the field values of the cloned instance in place.
-Cloning a vector amounts to copying the basic folder structure of an
-OpenFOAM case directory, together with the time directory containing the
-field values for that snapshot.
+Apart from loading OpenFOAM data into memory, we also need to be able to
+add and subtract vectors. The class `Vector` takes care of all of this
+in a practical manner[^3].
 
 <!-- TODO: consider keeping only one example -->
 ## Test problem 1: 2D laminar flow inside a pipe
@@ -241,3 +236,9 @@ accurate *coarse* integrator alongside a more computationally expensive
 *fine* integrator. In practice this means that the coarse integrator
 works on a coarser mesh than the fine integrator (for details, see
 Courant–Friedrichs–Lewy condition, often referred to as CFL).
+
+[^3]: When we need to add two vectors, we clone the
+first and then modify the field values of the cloned instance in place.
+Cloning a vector amounts to copying the basic folder structure of an
+OpenFOAM case directory, together with the time directory containing the
+field values for that snapshot.
