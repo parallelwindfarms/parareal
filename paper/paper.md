@@ -120,19 +120,6 @@ and have efficient memory mapped access to the binary field values
 inside. Our module is general enough to be able to tackle generic
 parsing problems, and we published it independently [@byteparsing2021].
 
-## Vectors
-
-We define a `Vector` as an object that stores the complete state of the
-simulation at any given time. OpenFOAM nativelly stores this information
-as a set of files on a folder structure. For the purpose of Parareal we
-need to be able to add and subtract vectors. We implemented the class
-`Vector` for OpenFOAM snapshots by keeping every instance inside its own
-dedicated case folder. When we need to add two vectors, we clone the
-first and then modify the field values of the cloned instance in place.
-Cloning a vector amounts to copying the basic folder structure of an
-OpenFOAM case directory, together with the time directory containing the
-field values for that snapshot.
-
 <!-- TODO: consider keeping only one example -->
 ## Test problem 1: 2D laminar flow inside a pipe
 
