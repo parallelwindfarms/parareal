@@ -26,58 +26,19 @@ bibliography: paper.bib
 # aas-journal: Astrophysical Journal <- The name of the AAS journal.
 ---
 
-# Introduction
-
-## Computational Fluid Dynamics
-
-Computational Fluid Dynamics is a branch of physics that uses
-computational methods such as numerical analysis to address problems
-involving fluid flows. Examples of these problems could be aerodynamics,
-weather simulation, acoustics, heat transfer or environmental
-engineering. The technological and societal relevance of these problems
-is self-evident.
-
-Most fluid dynamics problems involve the resolution of boundary problems
-for non-linear partial differential equations. This kind of problems is
-notoriously known for the difficulty of their analytical resolution.
-Tackling them computationally is also challenging and resource-consuming
-[@kundu2010].
-
-A number of software suites is available for solving these problems,
-both open source and proprietary. In the present paper we'll focus our
-attention in OpenFOAM [@openfoam], one of the most popular software
-suites in this field.
-
-## Parallelization of dynamical systems solvers
-
-Problems in computational fluid dynamics are notorious for being highly compute intensive, both in terms of used memory and CPU utilization. Many attempts have been made to speed up computations by subdividing the work and distributing smaller jobs over many processors.
-
-Most accepted approaches for achieving parallel computation in CFD involve subdividing the domain into many components for which solving the system of equations are relatively independent. If we want to add more nodes to our computation, we need to subdivide the work in to smaller pieces. The problem is that with smaller sub-domains, the communication overhead increases, until adding more processors does not give any speed-up.
-
-Should we want to get our results faster, we need to look for alternative methods to speed up our calculations. One proposed method is to go parallel-in-time.
-
-<!-- ??? Resource-consuming computational methods are often a synonym of slow
-calculations. ???
-Parallel computing, especially since the (relative)
-popularization of supercomputers, can be of great help in reducing the
-computation time. But in order to get any advantage from
-parallelization, we need a parallelizable problem, *i.e.*, a problem
-that can be split into smaller, independent problems. -->
+# Summary
 
 Classical numerical solvers for dynamical systems, such as the
 Runge-Kutta algorithm, are not suitable for parallelization. The reason
 for this is that each integration step fundamentally depends on the
 previous one, making it an inherently serial process. But as we'll see
 below, the Parareal algorithm [@Lions2001] provides a solver
-that allows parallelization in the time domain. The Parareal algorithm 
-is known to lead to a computational advantage under certain circumstances 
+that allows parallelization in the time domain. The Parareal algorithm
+is known to lead to a computational advantage under certain circumstances
 [@AUBANEL2011172].
 
-## Our contribution
-
 The present work introduces the software solution we developed in order
-to apply the Parareal algorithm to any numerical solver in a practical way.
-We focus our attention in calculations with OpenFOAM.
+to apply the Parareal algorithm to different dynamical problems in a practical way.
 In order to attract an audience as big as possible, we
 decided to write it in Python, an open-source language with a large and
 active users' community. We made it suitable for running on
@@ -85,6 +46,32 @@ supercomputers. And last but not least, we followed not only the
 principles of FAIR programming [@chue_hong_neil_p_2022_6623556], but
 also those of literate programming [@knuth1992] and put great care in
 the testing and documentation.
+
+## Statement of need
+
+Our motivation for creating this package was the resolution of Computational
+Fluid Dynamics (CFD) problems; in particular, with OpenFOAM [@openfoam], one of the most popular software
+suites in the field of CFD.
+
+CFD is a branch of physics that uses
+computational methods such as numerical analysis to address problems
+involving fluid flows. Examples of these problems could be aerodynamics,
+weather simulation, acoustics, heat transfer or environmental
+engineering.
+
+Most fluid dynamics problems involve the resolution of boundary problems
+for non-linear partial differential equations. This kind of problems is
+notoriously known for the difficulty of their analytical resolution.
+Tackling them computationally is also challenging and resource-consuming
+[@kundu2010]. Parallelization in time is one of the proposed methods to
+speed-up this kind of computations.
+
+Being a relatively exotic algorithm, Parareal is not natively supported
+by OpenFOAM. Last but not least, our package allows for using generic
+solvers, making it a good team mate for other dynamical systems solvers.
+
+<!-- The commented lines below are more interesting to researchers than to software engineers. I suggest removing -->
+<!-- Most accepted approaches for achieving parallel computation in CFD involve subdividing the domain into many components for which solving the system of equations are relatively independent. If we want to add more nodes to our computation, we need to subdivide the work into smaller pieces. The problem is that with smaller sub-domains, the communication overhead increases, until adding more processors does not give any speed-up. Should we want to get our results faster, we need to look for alternative methods to speed up our calculations. One proposed method is to go parallel-in-time. -->
 
 # Approach
 
