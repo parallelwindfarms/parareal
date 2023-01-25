@@ -26,7 +26,7 @@ bibliography: paper.bib
 # aas-journal: Astrophysical Journal <- The name of the AAS journal.
 ---
 
-# Summary
+## Summary
 
 Classical numerical solvers for dynamical systems, such as the
 Runge-Kutta algorithm, are not suitable for parallelization. The reason
@@ -50,7 +50,7 @@ the testing and documentation.
 ## Statement of need
 
 Our motivation for creating this package was the resolution of Computational
-Fluid Dynamics (CFD) problems; in particular, with OpenFOAM [@openfoam], one of the most popular software
+Fluid Dynamics (CFD) problems, in particular, with OpenFOAM[^1] [@openfoam], one of the most popular software
 suites in the field of CFD.
 
 CFD is a branch of physics that uses
@@ -73,9 +73,7 @@ solvers, making it a good team mate for other dynamical systems solvers.
 <!-- The commented lines below are more interesting to researchers than to software engineers. I suggest removing -->
 <!-- Most accepted approaches for achieving parallel computation in CFD involve subdividing the domain into many components for which solving the system of equations are relatively independent. If we want to add more nodes to our computation, we need to subdivide the work into smaller pieces. The problem is that with smaller sub-domains, the communication overhead increases, until adding more processors does not give any speed-up. Should we want to get our results faster, we need to look for alternative methods to speed up our calculations. One proposed method is to go parallel-in-time. -->
 
-# Approach
-
-## Parareal {#subsec:parareal}
+## Parareal algorithm in a nutshell {#subsec:parareal}
 
 The Parareal algorithm [@Lions2001] allows the parallel implementation
 of the time discretization of a partial differential equation. This is
@@ -154,6 +152,7 @@ Note that the contribution of the fine, computationally-expensive integrator $\m
 }
 \end{figure}
 
+## Notes on architecture
 ## Convergence criterion {#subsec:convergence}
 
 The minimum acceptable number of iterations of the Parareal algorithm
@@ -221,13 +220,6 @@ and ${\tt y_n}$ is the *next* iteration.
 By feeding the algorithm Dask delayed functions, a workflow is <!-- TODO: Consider adding a citation to Dask delayed functions-- > 
 automatically generated for parallel execution on any number of
 back-ends.
-
-## OpenFOAM
-
-OpenFOAM[^1] is a C++ toolbox for the solution, pre- and post-processing
-of computational fluid dynamics problems [@openfoam]. It is free, open
-source, and has a large user base across different areas of science and
-technology.
 
 ### Input/Output
 
@@ -324,7 +316,11 @@ This project was supported by funding from the Netherlands eScience Center and N
 
 # References
 
-[^1]: Acronym for \"Open-source Field Operation And Manipulation\"
+[^1]: Acronym for \"Open-source Field Operation And Manipulation\".
+OpenFOAM is a C++ toolbox for the solution, pre- and post-processing
+of computational fluid dynamics problems. It is free, open
+source, and has a large user base across different areas of science and
+technology.
 
 <!-- TODO: Consider removing -->
 [^2]: There is also premature support for the Adios2 file format that is
