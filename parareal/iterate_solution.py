@@ -1,5 +1,5 @@
 # ~\~ language=Python filename=parareal/iterate_solution.py
-# ~\~ begin <<docs/01-parareal.md|parareal/iterate_solution.py>>[init]
+# ~\~ begin <<docs/04-implementation.md|parareal/iterate_solution.py>>[init]
 from .abstract import (Vector, Solution)
 import numpy as np
 import math

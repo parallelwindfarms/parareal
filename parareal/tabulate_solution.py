@@ -1,5 +1,5 @@
 # ~\~ language=Python filename=parareal/tabulate_solution.py
-# ~\~ begin <<docs/01-parareal.md|parareal/tabulate_solution.py>>[init]
+# ~\~ begin <<docs/04-implementation.md|parareal/tabulate_solution.py>>[init]
 from .abstract import (Solution, Vector)
 from typing import (Sequence, Any)
 import numpy as np
@@ -18,7 +18,7 @@ def tabulate(step: Solution, y_0: Vector, t: Array) -> Sequence[Vector]:
         y.append(y_i)
     return y
 
-# ~\~ begin <<docs/01-parareal.md|tabulate-np>>[init]
+# ~\~ begin <<docs/04-implementation.md|tabulate-np>>[init]
 def tabulate_np(step: Solution, y_0: Array, t: Array) -> Array:
     y = np.zeros(dtype=y_0.dtype, shape=(t.size,) + y_0.shape)
     y[0] = y_0

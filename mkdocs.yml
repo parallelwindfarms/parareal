@@ -1,11 +1,17 @@
 # yaml-language-server: $schema=https://squidfunk.github.io/mkdocs-material/schema.json
 
-site_name: Non-linear dynamics course on complexity explorer
+site_name: Parareal in Python
+
+plugins:
+  - search
+  - bibtex:
+      bib_file: "docs/paper.bib"
 
 markdown_extensions:
    - pymdownx.superfences
    - admonition
    - def_list
+   - footnotes
    - pymdownx.arithmatex:
       generic: true
    - toc:

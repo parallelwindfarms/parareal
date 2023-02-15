@@ -1,5 +1,5 @@
 # ~\~ language=Python filename=examples/mpi_futures.py
-# ~\~ begin <<docs/03-using-hdf5-and-mpi.md|examples/mpi_futures.py>>[init]
+# ~\~ begin <<docs/02-dho-advanced.md|examples/mpi_futures.py>>[init]
 from __future__ import annotations
 import argh  # type: ignore
 import numpy as np
@@ -8,18 +8,18 @@ from dataclasses import dataclass, field
 from typing import (Union, Callable, Optional, Any, Iterator)
 import logging
 
-# ~\~ begin <<docs/03-using-hdf5-and-mpi.md|example-mpi-imports>>[init]
+# ~\~ begin <<docs/02-dho-advanced.md|example-mpi-imports>>[init]
 import operator
 from functools import partial
 import h5py as h5  # type: ignore
 from abc import (ABC, abstractmethod)
 # ~\~ end
-# ~\~ begin <<docs/03-using-hdf5-and-mpi.md|example-mpi-imports>>[1]
+# ~\~ begin <<docs/02-dho-advanced.md|example-mpi-imports>>[1]
 import dask
 # from dask_mpi import initialize  # type: ignore
 from dask.distributed import Client  # type: ignore
 # ~\~ end
-# ~\~ begin <<docs/03-using-hdf5-and-mpi.md|example-mpi-imports>>[2]
+# ~\~ begin <<docs/02-dho-advanced.md|example-mpi-imports>>[2]
 from parareal.futures import (Parareal)
 
 from parareal.forward_euler import forward_euler
@@ -28,7 +28,7 @@ from parareal.harmonic_oscillator import (underdamped_solution, harmonic_oscilla
 
 import math
 # ~\~ end
-# ~\~ begin <<docs/03-using-hdf5-and-mpi.md|vector-expressions>>[init]
+# ~\~ begin <<docs/02-dho-advanced.md|vector-expressions>>[init]
 class Vector(ABC):
     @abstractmethod
     def reduce(self: Vector) -> np.ndarray:
@@ -46,13 +46,13 @@ class Vector(ABC):
     def __rmul__(self, scale):
         return UnaryExpr(partial(operator.mul, scale), self)
 # ~\~ end
-# ~\~ begin <<docs/03-using-hdf5-and-mpi.md|vector-expressions>>[1]
+# ~\~ begin <<docs/02-dho-advanced.md|vector-expressions>>[1]
 def reduce_expr(expr: Union[np.ndarray, Vector]) -> np.ndarray:
     while isinstance(expr, Vector):
         expr = expr.reduce()
     return expr
 # ~\~ end
-# ~\~ begin <<docs/03-using-hdf5-and-mpi.md|vector-expressions>>[2]
+# ~\~ begin <<docs/02-dho-advanced.md|vector-expressions>>[2]
 @dataclass
 class H5Snap(Vector):
     path: Path
@@ -69,7 +69,7 @@ class H5Snap(Vector):
         logger.debug(f"read {x} from {self.path}")
         return self.data()
 # ~\~ end
-# ~\~ begin <<docs/03-using-hdf5-and-mpi.md|vector-expressions>>[3]
+# ~\~ begin <<docs/02-dho-advanced.md|vector-expressions>>[3]
 class Index:
     def __getitem__(self, idx):
         if isinstance(idx, tuple):
@@ -79,7 +79,7 @@ class Index:
 
 index = Index()
 # ~\~ end
-# ~\~ begin <<docs/03-using-hdf5-and-mpi.md|vector-expressions>>[4]
+# ~\~ begin <<docs/02-dho-advanced.md|vector-expressions>>[4]
 @dataclass
 class UnaryExpr(Vector):
     func: Callable[[np.ndarray], np.ndarray]
@@ -101,7 +101,7 @@ class BinaryExpr(Vector):
         b = reduce_expr(self.inp2)
         return self.func(a, b)
 # ~\~ end
-# ~\~ begin <<docs/03-using-hdf5-and-mpi.md|vector-expressions>>[5]
+# ~\~ begin <<docs/02-dho-advanced.md|vector-expressions>>[5]
 @dataclass
 class LiteralExpr(Vector):
     value: np.ndarray
@@ -109,7 +109,7 @@ class LiteralExpr(Vector):
     def reduce(self):
         return self.value
 # ~\~ end
-# ~\~ begin <<docs/03-using-hdf5-and-mpi.md|example-mpi-coarse>>[init]
+# ~\~ begin <<docs/02-dho-advanced.md|example-mpi-coarse>>[init]
 @dataclass
 class Coarse:
     n_iter: int
@@ -120,7 +120,7 @@ class Coarse:
         logging.debug(f"coarse result: {y} {reduce_expr(y)} {t0} {t1} {a}")
         return a
 # ~\~ end
-# ~\~ begin <<docs/03-using-hdf5-and-mpi.md|example-mpi-fine>>[init]
+# ~\~ begin <<docs/02-dho-advanced.md|example-mpi-fine>>[init]
 def generate_filename(name: str, n_iter: int, t0: float, t1: float) -> str:
     return f"{name}-{n_iter:04}-{int(t0*1000):06}-{int(t1*1000):06}.h5"
 
@@ -152,7 +152,7 @@ class Fine:
             ds.attrs["n"] = n
         return H5Snap(path, "data", index[-1])
 # ~\~ end
-# ~\~ begin <<docs/03-using-hdf5-and-mpi.md|example-mpi-history>>[init]
+# ~\~ begin <<docs/02-dho-advanced.md|example-mpi-history>>[init]
 @dataclass
 class History:
     archive: Path
@@ -190,18 +190,18 @@ def main(log: str = "WARNING", log_file: Optional[str] = None,
     if not isinstance(log_level, int):
         raise ValueError(f"Invalid log level `{log}`")
     logging.basicConfig(level=log_level, filename=log_file)
-    # ~\~ begin <<docs/03-using-hdf5-and-mpi.md|example-mpi-main>>[init]
+    # ~\~ begin <<docs/02-dho-advanced.md|example-mpi-main>>[init]
     # initialize()
     client = Client(n_workers=4, threads_per_worker=1)
     # ~\~ end
-    # ~\~ begin <<docs/03-using-hdf5-and-mpi.md|example-mpi-main>>[1]
+    # ~\~ begin <<docs/02-dho-advanced.md|example-mpi-main>>[1]
     system = harmonic_oscillator(OMEGA0, ZETA)
     y0 = np.array([1.0, 0.0])
     t = np.linspace(0.0, 15.0, 20)
     archive = Path("./output/euler")
     tabulate(Fine(archive, "fine", 0, system, H).solution, LiteralExpr(y0), t)
     # ~\~ end
-    # ~\~ begin <<docs/03-using-hdf5-and-mpi.md|example-mpi-main>>[2]
+    # ~\~ begin <<docs/02-dho-advanced.md|example-mpi-main>>[2]
     archive = Path("./output/parareal")
     p = Parareal(
         client,

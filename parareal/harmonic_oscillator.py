@@ -1,17 +1,17 @@
 # ~\~ language=Python filename=parareal/harmonic_oscillator.py
-# ~\~ begin <<docs/03-using-hdf5-and-mpi.md|parareal/harmonic_oscillator.py>>[init]
+# ~\~ begin <<docs/02-dho-advanced.md|parareal/harmonic_oscillator.py>>[init]
 from .abstract import (Problem)
 from typing import Callable
 from numpy.typing import NDArray
 import numpy as np
 
-# ~\~ begin <<docs/03-using-hdf5-and-mpi.md|harmonic-oscillator-problem>>[init]
+# ~\~ begin <<docs/02-dho-advanced.md|harmonic-oscillator-problem>>[init]
 def harmonic_oscillator(omega_0: float, zeta: float) -> Problem:
     def f(y, t):
         return np.r_[y[1], -2 * zeta * omega_0 * y[1] - omega_0**2 * y[0]]
     return f
 # ~\~ end
-# ~\~ begin <<docs/03-using-hdf5-and-mpi.md|harmonic-oscillator-solution>>[init]
+# ~\~ begin <<docs/02-dho-advanced.md|harmonic-oscillator-solution>>[init]
 def underdamped_solution(omega_0: float, zeta: float) \
         -> Callable[[NDArray[np.float64]], NDArray[np.float64]]:
     amp   = 1 / np.sqrt(1 - zeta**2)
