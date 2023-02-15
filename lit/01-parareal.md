@@ -1,6 +1,20 @@
 # Parareal
 
 ``` {.python file=parareal/__init__.py}
+import subprocess
+
+proc_cat = subprocess.run(
+    ["cat", "README.md", "lit/03-using-hdf5-and-mpi.md", "lit/01-parareal.md",
+     "lit/02-parafutures.md", "lit/end-api.md"],
+    capture_output=True)
+proc_eval = subprocess.run(
+    ["awk", "-f", "eval_shell_pass.awk"],
+    input=proc_cat.stdout, capture_output=True)
+proc_label = subprocess.run(
+    ["awk", "-f", "noweb_label_pass.awk"],
+    input=proc_eval.stdout, capture_output=True)
+__doc__ = proc_label.stdout.decode()
+
 from .tabulate_solution import tabulate
 from .parareal import parareal
 from . import abstract
@@ -13,25 +27,20 @@ We may present the Parareal algorithm in abstract terms, and match those terms w
 
 We need to define the following:
 
-> `Vector`
->
-> : A `Vector` is an object that represents the state of a solution at any one time. On this state we need to be able to do addition, subtraction and scalar multiplication, in order to perform the Parareal algorithm.
->
-> `Solution`
->
-> : A `Solution` is a function that takes an initial `Vector`, a time `t_0` and a time `t`, returning the state `Vector` at time `t`.
->
-> `Mapping`
->
-> : A `Mapping` is a function from one state `Vector` to another, for example a mapping from a coarse to a fine mesh or vice-versa.
->
-> Fine `Solution`
->
-> : The *fine* solution is the solution at the desired resolution. If we were not doing parallel-in-time, this would be the integrator to get at the correct result. We may also use the fine solution to find a ground thruth in testing the Parareal solution.
->
-> Coarse `Solution`
->
-> : The *coarse* solution is the solution that is fast but less accurate.
+### Vector
+A `Vector` is an object that represents the state of a solution at any one time. On this state we need to be able to do addition, subtraction and scalar multiplication, in order to perform the Parareal algorithm.
+
+### Solution
+A `Solution` is a function that takes an initial `Vector`, a time `t_0` and a time `t`, returning the state `Vector` at time `t`.
+
+### Mapping
+A `Mapping` is a function from one state `Vector` to another, for example a mapping from a coarse to a fine mesh or vice-versa.
+
+### Fine Solution
+The *fine* solution is the solution at the desired resolution. If we were not doing parallel-in-time, this would be the integrator to get at the correct result. We may also use the fine solution to find a ground thruth in testing the Parareal solution.
+
+### Coarse Solution
+The *coarse* solution is the solution that is fast but less accurate.
 
 ``` {.python file=parareal/abstract.py}
 from __future__ import annotations
@@ -43,11 +52,11 @@ from typing import (Callable, Protocol, TypeVar, Union)
 ### Vector
 We have an ODE in the form
 
-$$y' = f(y, t).$${#eq:ode}
+$$y' = f(y, t).$$
 
 Here $y$ can be a scalar value, a vector of values (say a `numpy` array), or any expression of *state*. A naive implementation of an ODE integrator would be
 
-$$y_{n+1} = y_{n} + \Delta t f(y_{n}, t).$${#eq:euler-method}
+$$y_{n+1} = y_{n} + \Delta t f(y_{n}, t).$$
 
 +@eq:euler-method is known as the *forward Euler method*. We can capture the *state* $y$ in an abstract class we'll call `Vector`. We chose this name because we expect this objects to share (some of) the arithmetic properties of mathematical vectors. Namely, we want to be able to add, subtract and scale them. The chunk below states this need of a basic arithmetic in the form of abstract methods.
 
@@ -97,7 +106,7 @@ Solution = Union[Callable[[TVector, float, float], TVector],
                  Callable[..., TVector]]
 ```
 
-Those readers more familiar with classical physics or mathematics may notice that our `Problem` object corresponds with the function $f$ in (+@eq:ode). The `Solution` object, on the other hand, corresponds with the evolution operator $\phi$ in equation @eq:solution.
+Those readers more familiar with classical physics or mathematics may notice that our `Problem` object corresponds with the function $f$. The `Solution` object, on the other hand, corresponds with the evolution operator $\phi$:
 
 $${\rm Solution} : (y_0, t_0; t) \to \phi(y_0, t_0; t) = y.$${#eq:solution}
 
@@ -155,114 +164,6 @@ def iterate_solution(step: Solution, h: float) -> Solution:
     return iter_step
 ```
 
-#### Example: damped harmonic oscillator
-We give a bit more attention to the example of the harmonic oscillator, because it will also serve as a first test case for the Parareal algorithm later on.
-
-The harmonic oscillator can model the movement of a pendulum or the vibration of a mass on a string.
-
-$$y'' + 2\zeta \omega_0 y' + \omega_0^2 y = 0,$$
-
-where $\omega_0 = \sqrt{k/m}$ and $\zeta = c / 2\sqrt{mk}$, $k$ being the spring constant, $m$ the test mass and $c$ the friction constant.
-
-To solve this second order ODE we need to introduce a second variable to solve for. Say $q = y$ and $p = y'$.
-
-$$\begin{aligned}
-    q' &= p\\
-    p' &= -2\zeta \omega_0 p + \omega_0^2 q
-\end{aligned}$$ {#eq:harmonic-oscillator}
-
-The `Problem` is then given as
-
-``` {.python file=parareal/harmonic_oscillator.py}
-from .abstract import (Problem)
-from typing import Callable
-from numpy.typing import NDArray
-import numpy as np
-
-def harmonic_oscillator(omega_0: float, zeta: float) -> Problem:
-    def f(y, t):
-        return np.r_[y[1], -2 * zeta * omega_0 * y[1] - omega_0**2 * y[0]]
-    return f
-
-<<harmonic-oscillator-solution>>
-
-if __name__ == "__main__":
-    import numpy as np  # type: ignore
-    import pandas as pd  # type: ignore
-    from plotnine import ggplot, geom_line, aes  # type: ignore
-
-    from pintFoam.parareal.harmonic_oscillator import harmonic_oscillator
-    from pintFoam.parareal.forward_euler import forward_euler
-    from pintFoam.parareal.iterate_solution import iterate_solution
-    from pintFoam.parareal.tabulate_solution import tabulate_np
-
-    OMEGA0 = 1.0
-    ZETA = 0.5
-    H = 0.001
-    system = harmonic_oscillator(OMEGA0, ZETA)
-
-    def coarse(y, t0, t1):
-        return forward_euler(system)(y, t0, t1)
-
-    # fine :: Solution[NDArray]
-    def fine(y, t0, t1):
-        return iterate_solution(forward_euler(system), H)(y, t0, t1)
-
-    y0 = np.array([1.0, 0.0])
-    t = np.linspace(0.0, 15.0, 100)
-    exact_result = underdamped_solution(OMEGA0, ZETA)(t)
-    euler_result = tabulate_np(fine, y0, t)
-
-    data = pd.DataFrame({
-        "time": t,
-        "exact_q": exact_result[:,0],
-        "exact_p": exact_result[:,1],
-        "euler_q": euler_result[:,0],
-        "euler_p": euler_result[:,1]})
-
-    plot = ggplot(data) \
-        + geom_line(aes("time", "exact_q")) \
-        + geom_line(aes("time", "euler_q"), color="#000088")
-    plot.save("plot.svg")
-
-```
-
-#### Exact solution
-The damped harmonic oscillator has an exact solution, given the ansatz $y = A \exp(z t)$, we get
-
-$$z_{\pm} = \omega_0\left(-\zeta \pm \sqrt{\zeta^2 - 1}\right).$$
-
-and thus the general solution:
-
-$$y(t) = A \exp(z_+ t) + B \exp(z_- t) \ : \zeta \neq 1 $$
-$$y(t) = (A + Bt) \exp(-\omega_0 t) : \zeta = 1 $$
-
-This dynamical system has three qualitatively different solutions, each of them depending on the sign of the contents of the square root. Particularly, if the contents of the square root are negative, the two possible values for $z$ will be complex numbers, making oscillations possible. More specifically, the three cases are:
-
-- *overdamped* ($\zeta > 1$ and, thus, both $z$ are real numbers)
-- *critical dampening* ($\zeta = 1$ and $z$ is real and equal to $-\omega_0$)
-- *underdamped* ($\mid \zeta \mid < 1$, and $z = -\omega_0\zeta \mp i \omega_0 \sqrt{1 - \zeta^2}$).
-
-The underdamped case is typically the most interesting one. In this case we have solutions of the form:
-
-$$y = A\quad \underbrace{\exp(-\omega_0\zeta t)}_{\rm dampening}\quad\underbrace{\exp(\pm i \omega_0 \sqrt{1 - \zeta^2} t)}_{\rm oscillation},$$
-
-Given an initial condition $q_0 = 1, p_0 = 0$, the solution is computed as
-
-``` {.python #harmonic-oscillator-solution}
-def underdamped_solution(omega_0: float, zeta: float) \
-        -> Callable[[NDArray[np.float64]], NDArray[np.float64]]:
-    amp   = 1 / np.sqrt(1 - zeta**2)
-    phase = np.arcsin(zeta)
-    freq  = omega_0 * np.sqrt(1 - zeta**2)
-
-    def f(t: NDArray[np.float64]) -> NDArray[np.float64]:
-        dampening = np.exp(-omega_0*zeta*t)
-        q = amp * dampening * np.cos(freq * t - phase)
-        p = - amp * omega_0 * dampening * np.sin(freq * t)
-        return np.c_[q, p]
-    return f
-```
 
 #### Numeric solution
 To plot a `Solution`, we need to tabulate the results for a given sequence of time points.

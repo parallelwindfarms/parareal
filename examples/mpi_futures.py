@@ -183,10 +183,6 @@ def combine_fine_data(files: list[Path]) -> np.ndarray:
     first = next(data)
     return np.concatenate([first] + [x[1:] for x in data], axis=0)
 
-# def list_files(path: Path) -> list[Path]:
-#     all_files = path.glob("*.h5")
-#     return []
-
 def main(log: str = "WARNING", log_file: Optional[str] = None,
          OMEGA0=1.0, ZETA=0.5, H=0.01):
     """Run model of dampened hormonic oscillator in Dask"""
@@ -215,7 +211,7 @@ def main(log: str = "WARNING", log_file: Optional[str] = None,
     history = History(archive)
     p.wait(jobs, history.convergence_test)
 
-    client.shutdown()
+    client.close()
     # ~\~ end
 
 if __name__ == "__main__":

@@ -1,4 +1,7 @@
 build
+dist
 examples/output
 .coverage*
 __pycache__
+.ipynb_checkpoints
+

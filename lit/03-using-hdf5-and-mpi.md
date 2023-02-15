@@ -1,4 +1,4 @@
-# Example: using HDF5 and MPI and Dask futures
+# Tutorial: using HDF5 and MPI and Dask futures
 In this example, we look again at the example of a dampened harmonic oscillator. This time we will go in engineering overkill mode and show how a model can be scaled to a large compute cluster using Dask, MPI and HDF5 as intermediate storage. To avoid confusion and difficult software configuration, we won't use the MPI feature of the HDF5 format. Instead, every job will write its output to its own HDF5 file.
 
 This tutorial covers the following concepts:
@@ -35,10 +35,6 @@ def combine_fine_data(files: list[Path]) -> np.ndarray:
     first = next(data)
     return np.concatenate([first] + [x[1:] for x in data], axis=0)
 
-# def list_files(path: Path) -> list[Path]:
-#     all_files = path.glob("*.h5")
-#     return []
-
 def main(log: str = "WARNING", log_file: Optional[str] = None,
          OMEGA0=1.0, ZETA=0.5, H=0.01):
     """Run model of dampened hormonic oscillator in Dask"""
@@ -52,6 +48,116 @@ if __name__ == "__main__":
     argh.dispatch_command(main)
 ```
 
+## Harmonic oscillator
+The harmonic oscillator can model the movement of a pendulum or the vibration of a mass on a string.
+
+$$y'' + 2\zeta \omega_0 y' + \omega_0^2 y = 0,$$
+
+where $\omega_0 = \sqrt{k/m}$ and $\zeta = c / 2\sqrt{mk}$, $k$ being the spring constant, $m$ the test mass and $c$ the friction constant.
+
+To solve this second order ODE we need to introduce a second variable to solve for. Say $q = y$ and $p = y'$.
+
+$$\begin{aligned}
+    q' &= p\\
+    p' &= -2\zeta \omega_0 p + \omega_0^2 q
+\end{aligned}$$
+
+The `Problem` is then given as
+
+``` {.python #harmonic-oscillator-problem}
+def harmonic_oscillator(omega_0: float, zeta: float) -> Problem:
+    def f(y, t):
+        return np.r_[y[1], -2 * zeta * omega_0 * y[1] - omega_0**2 * y[0]]
+    return f
+```
+
+<details>
+``` {.python file=parareal/harmonic_oscillator.py}
+from .abstract import (Problem)
+from typing import Callable
+from numpy.typing import NDArray
+import numpy as np
+
+<<harmonic-oscillator-problem>>
+<<harmonic-oscillator-solution>>
+
+if __name__ == "__main__":
+    import numpy as np  # type: ignore
+    import pandas as pd  # type: ignore
+    from plotnine import ggplot, geom_line, aes  # type: ignore
+
+    from pintFoam.parareal.harmonic_oscillator import harmonic_oscillator
+    from pintFoam.parareal.forward_euler import forward_euler
+    from pintFoam.parareal.iterate_solution import iterate_solution
+    from pintFoam.parareal.tabulate_solution import tabulate_np
+
+    OMEGA0 = 1.0
+    ZETA = 0.5
+    H = 0.001
+    system = harmonic_oscillator(OMEGA0, ZETA)
+
+    def coarse(y, t0, t1):
+        return forward_euler(system)(y, t0, t1)
+
+    # fine :: Solution[NDArray]
+    def fine(y, t0, t1):
+        return iterate_solution(forward_euler(system), H)(y, t0, t1)
+
+    y0 = np.array([1.0, 0.0])
+    t = np.linspace(0.0, 15.0, 100)
+    exact_result = underdamped_solution(OMEGA0, ZETA)(t)
+    euler_result = tabulate_np(fine, y0, t)
+
+    data = pd.DataFrame({
+        "time": t,
+        "exact_q": exact_result[:,0],
+        "exact_p": exact_result[:,1],
+        "euler_q": euler_result[:,0],
+        "euler_p": euler_result[:,1]})
+
+    plot = ggplot(data) \
+        + geom_line(aes("time", "exact_q")) \
+        + geom_line(aes("time", "euler_q"), color="#000088")
+    plot.save("plot.svg")
+```
+</details>
+
+#### Exact solution
+The damped harmonic oscillator has an exact solution, given the ansatz $y = A \exp(z t)$, we get
+
+$$z_{\pm} = \omega_0\left(-\zeta \pm \sqrt{\zeta^2 - 1}\right).$$
+
+and thus the general solution:
+
+$$y(t) = A \exp(z_+ t) + B \exp(z_- t) \ : \zeta \neq 1 $$
+$$y(t) = (A + Bt) \exp(-\omega_0 t) : \zeta = 1 $$
+
+This dynamical system has three qualitatively different solutions, each of them depending on the sign of the contents of the square root. Particularly, if the contents of the square root are negative, the two possible values for $z$ will be complex numbers, making oscillations possible. More specifically, the three cases are:
+
+- *overdamped* ($\zeta > 1$ and, thus, both $z$ are real numbers)
+- *critical dampening* ($\zeta = 1$ and $z$ is real and equal to $-\omega_0$)
+- *underdamped* ($\mid \zeta \mid < 1$, and $z = -\omega_0\zeta \mp i \omega_0 \sqrt{1 - \zeta^2}$).
+
+The underdamped case is typically the most interesting one. In this case we have solutions of the form:
+
+$$y = A\quad \underbrace{\exp(-\omega_0\zeta t)}_{\rm dampening}\quad\underbrace{\exp(\pm i \omega_0 \sqrt{1 - \zeta^2} t)}_{\rm oscillation},$$
+
+Given an initial condition $q_0 = 1, p_0 = 0$, the solution is computed as
+
+``` {.python #harmonic-oscillator-solution}
+def underdamped_solution(omega_0: float, zeta: float) \
+        -> Callable[[NDArray[np.float64]], NDArray[np.float64]]:
+    amp   = 1 / np.sqrt(1 - zeta**2)
+    phase = np.arcsin(zeta)
+    freq  = omega_0 * np.sqrt(1 - zeta**2)
+
+    def f(t: NDArray[np.float64]) -> NDArray[np.float64]:
+        dampening = np.exp(-omega_0*zeta*t)
+        q = amp * dampening * np.cos(freq * t - phase)
+        p = - amp * omega_0 * dampening * np.sin(freq * t)
+        return np.c_[q, p]
+    return f
+```
 
 ## Vector Arithmetic Expressions
 ### Abstract vectors
@@ -295,6 +401,13 @@ jobs = p.schedule(LiteralExpr(y0), t)
 history = History(archive)
 p.wait(jobs, history.convergence_test)
 
-client.shutdown()
+client.close()
 ```
+
+## Convergence
+The nice thing about the example with a dampened oscillator, is that we have a parameter by which we can tweak the amount of oscillations. Parareal is notoriously bad at oscillating behaviour, so we should see that reflected in the amount of iterations needed to converge.
+
+![](../lit/img/zeta05.svg)
+![](../lit/img/zeta06.svg)
+![](../lit/img/zeta07.svg)
 
