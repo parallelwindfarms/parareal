@@ -1,19 +1,8 @@
 # Parareal
 
-``` {.python file=parareal/__init__.py}
+```python
+# file="parareal/__init__.py"
 import subprocess
-
-proc_cat = subprocess.run(
-    ["cat", "README.md", "lit/03-using-hdf5-and-mpi.md", "lit/01-parareal.md",
-     "lit/02-parafutures.md", "lit/end-api.md"],
-    capture_output=True)
-proc_eval = subprocess.run(
-    ["awk", "-f", "eval_shell_pass.awk"],
-    input=proc_cat.stdout, capture_output=True)
-proc_label = subprocess.run(
-    ["awk", "-f", "noweb_label_pass.awk"],
-    input=proc_eval.stdout, capture_output=True)
-__doc__ = proc_label.stdout.decode()
 
 from .tabulate_solution import tabulate
 from .parareal import parareal
@@ -42,7 +31,7 @@ The *fine* solution is the solution at the desired resolution. If we were not do
 ### Coarse Solution
 The *coarse* solution is the solution that is fast but less accurate.
 
-``` {.python file=parareal/abstract.py}
+``` {.python title="parareal/abstract.py"}
 from __future__ import annotations
 from typing import (Callable, Protocol, TypeVar, Union)
 
@@ -60,7 +49,7 @@ $$y_{n+1} = y_{n} + \Delta t f(y_{n}, t).$$
 
 +@eq:euler-method is known as the *forward Euler method*. We can capture the *state* $y$ in an abstract class we'll call `Vector`. We chose this name because we expect this objects to share (some of) the arithmetic properties of mathematical vectors. Namely, we want to be able to add, subtract and scale them. The chunk below states this need of a basic arithmetic in the form of abstract methods.
 
-``` {.python #abstract-types}
+``` {.python title="#abstract-types"}
 TVector = TypeVar("TVector", bound="Vector")
 
 class Vector(Protocol):
@@ -83,14 +72,14 @@ _We don't actually need to implement these methods right now. All this is saying
 Note that we don't make a formal distinction here between a state vector and a vector representing a change in state.
 
 
-``` {.python #abstract-types}
+``` {.python title="#abstract-types"}
 Mapping = Callable[[TVector], TVector]
 ```
 
 ### Problem
 An ODE is then given as a function taking a `Vector` (the state $y$) and a `float` (the time $t$) returning a `Vector` (the derivative $y' = f(y,t)$ evaluated at $(y,t)$). We define the type `Problem`:
 
-``` {.python #abstract-types}
+``` {.python title="#abstract-types"}
 Problem = Callable[[TVector, float], TVector]
 ```
 
@@ -101,7 +90,7 @@ $${\rm Problem} : (y, t) \to f(y, t) = y'$$
 ### Solution
 If we have a `Problem`, we're after a `Solution`: a function that, given an initial `Vector` (the initial condition $y_0$), initial time ($t_0$) and final time ($t$), gives the resulting `Vector` (the solution, $y(t)$ for the given initial conditions).
 
-``` {.python #abstract-types}
+``` {.python title="#abstract-types"}
 Solution = Union[Callable[[TVector, float, float], TVector],
                  Callable[..., TVector]]
 ```
@@ -130,7 +119,7 @@ If we look a bit closely at the definitions of `Problem` and `Solution` we'll no
 
 An example of such a solver is the forward Euler method (+@eq:euler-method), that can be implemented as:
 
-``` {.python file=parareal/forward_euler.py}
+``` {.python title="parareal/forward_euler.py"}
 from .abstract import (Vector, Problem, Solution)
 
 def forward_euler(f: Problem) -> Solution:
@@ -148,7 +137,7 @@ Any existing solution can be iterated over to provide a solution over a larger t
 <!--{\rm Iter}[S, h]\big|_{t_0 + h, y = S(y, t_0, t_0 + h)}^{t_1} & {\rm otherwise}-->
 <!--\end{cases}.$$-->
 
-``` {.python file=parareal/iterate_solution.py}
+``` {.python title="parareal/iterate_solution.py"}
 from .abstract import (Vector, Solution)
 import numpy as np
 import math
@@ -168,7 +157,7 @@ def iterate_solution(step: Solution, h: float) -> Solution:
 #### Numeric solution
 To plot a `Solution`, we need to tabulate the results for a given sequence of time points.
 
-``` {.python file=parareal/tabulate_solution.py}
+``` {.python title="parareal/tabulate_solution.py"}
 from .abstract import (Solution, Vector)
 from typing import (Sequence, Any)
 import numpy as np
@@ -192,7 +181,7 @@ def tabulate(step: Solution, y_0: Vector, t: Array) -> Sequence[Vector]:
 
 In the case that the `Vector` type is actually a numpy array, we can specialize the `tabulate` routine to return a larger array.
 
-``` {.python #tabulate-np}
+``` {.python title="#tabulate-np"}
 def tabulate_np(step: Solution, y_0: Array, t: Array) -> Array:
     y = np.zeros(dtype=y_0.dtype, shape=(t.size,) + y_0.shape)
     y[0] = y_0
@@ -201,7 +190,7 @@ def tabulate_np(step: Solution, y_0: Array, t: Array) -> Array:
     return y
 ```
 
-``` {.python file=build/plot-harmonic-oscillator.py .hide}
+``` {.python title="build/plot-harmonic-oscillator.py"}
 import matplotlib.pylab as plt
 import numpy as np
 
@@ -269,7 +258,7 @@ From Wikipedia:
 
 Don't get blinded by the details of the algorithm. After all, everything boils down to an update equation that uses a state vector $y$ to calculate the state at the immediately next future step (in the same fashion as equation +@eq:euler-method did). The core equation translates to:
 
-``` {.python #parareal-core-1}
+``` {.python title="#parareal-core-1"}
 y_n[i] = coarse(y_n[i-1], t[i-1], t[i]) \
        + fine(y[i-1], t[i-1], t[i]) \
        - coarse(y[i-1], t[i-1], t[i])
@@ -277,7 +266,7 @@ y_n[i] = coarse(y_n[i-1], t[i-1], t[i]) \
 
 If we include a `Mapping` between fine and coarse meshes into the equation, we get:
 
-``` {.python #parareal-core-2}
+``` {.python title="#parareal-core-2"}
 y_n[i] = c2f(coarse(f2c(y_n[i-1]), t[i-1], t[i])) \
        + fine(y[i-1], t[i-1], t[i]) \
        - c2f(coarse(f2c(y[i-1]), t[i-1], t[i]))
@@ -285,7 +274,7 @@ y_n[i] = c2f(coarse(f2c(y_n[i-1]), t[i-1], t[i])) \
 
 The rest is boiler plate. For the `c2f` and `f2c` mappings we provide a default argument of the identity function.
 
-``` {.python file=parareal/parareal.py}
+``` {.python title="parareal/parareal.py"}
 from .abstract import (Solution, Mapping)
 import numpy as np
 
@@ -323,11 +312,11 @@ def parareal_np(
 
 ## Running in parallel
 
-``` {.python #import-dask}
+``` {.python title="#import-dask"}
 from dask import delayed  # type: ignore
 ```
 
-``` {.python #daskify .hide}
+``` {.python title="#daskify"}
 <<import-dask>>
 import numpy as np
 
@@ -359,7 +348,7 @@ def gather(*args):
 
 To see what Dask does, first we'll daskify the direct integration routine in `tabulate`. We take the same harmonic oscillator we had before. For the sake of argument let's divide the time line in three steps (so four points).
 
-``` {.python #daskify}
+``` {.python title="#daskify"}
 omega_0 = 1.0
 zeta = 0.5
 f = harmonic_oscillator(omega_0, zeta)
@@ -368,7 +357,7 @@ t = np.linspace(0.0, 15.0, 4)
 
 We now define the `fine` integrator:
 
-```{.python #daskify}
+```{.python title="#daskify"}
 h = 0.01
 
 @green
@@ -379,13 +368,13 @@ def fine(x, t_0, t_1):
 
 It doesn't really matter what the fine integrator does, since we won't run anything. We'll just pretend. The `delayed` decorator makes sure that the integrator is never called, we just store the information that we *want* to call the `fine` function. The resulting value is a *promise* that at some point we *will* call the `fine` function. The nice thing is, that this promise behaves like any other Python object, it even qualifies as a `Vector`! The `tabulate` routine returns a `Sequence` of `Vector`s, in this case a list of promises. The `gather` function takes a list of promises and turns it into a promise of a list.
 
-``` {.python #daskify}
+``` {.python title="#daskify"}
 y_euler = tabulate(fine, [1.0, 0.0], t)
 ```
 
 We can draw the resulting workflow:
 
-``` {.python .hide file=build/plot-dask-seq.py}
+``` {.python title="build/plot-dask-seq.py"}
 <<daskify>>
 
 gather(*y_euler).visualize("docs/img/seq-graph.svg", rankdir="LR", data_attributes=attrs)
@@ -401,7 +390,7 @@ $(target): build/plot-dask-seq.py
 
 This workflow is entirely sequential, every step depending on the preceding one. Now for Parareal! We also define the `coarse` integrator.
 
-``` {.python #daskify}
+``` {.python title="#daskify"}
 @delayed
 def coarse(x, t_0, t_1):
     return forward_euler(f)(x, t_0, t_1)
@@ -409,17 +398,17 @@ def coarse(x, t_0, t_1):
 
 Parareal is initialised with the ODE integrated by the coarse integrator, just like we did before with the fine one.
 
-``` {.python #daskify}
+``` {.python title="#daskify"}
 y_first = tabulate(coarse, [1.0, 0.0], t)
 ```
 
 We can now perform a single iteration of Parareal to see what the workflow looks like:
 
-``` {.python #daskify}
+``` {.python title="#daskify"}
 y_parareal = gather(*parareal(coarse, fine)(y_first, t))
 ```
 
-``` {.python .hide file=build/plot-dask-graphs.py}
+``` {.python title="build/plot-dask-graphs.py"}
 <<daskify>>
 
 y_parareal.visualize("docs/img/parareal-graph.svg", rankdir="LR", data_attributes=attrs)

@@ -10,7 +10,7 @@ This tutorial covers the following concepts:
 The following shows some best practices when working with orchestrated computations. One is about using well established data standards, the other about reducing overhead on the distributed scheduler. We can solve both these issues by abstracting over the representation of the state vector in our system. This technique is definitely overkill for our harmonic oscillator example, but it is also in general a good recipe for running Numpy based simulations in an organized manner.
 
 
-``` {.python file=examples/mpi_futures.py #example-mpi}
+``` {.python title="examples/mpi_futures.py"}
 from __future__ import annotations
 import argh  # type: ignore
 import numpy as np
@@ -64,7 +64,7 @@ $$\begin{aligned}
 
 The `Problem` is then given as
 
-``` {.python #harmonic-oscillator-problem}
+``` {.python title="#harmonic-oscillator-problem"}
 def harmonic_oscillator(omega_0: float, zeta: float) -> Problem:
     def f(y, t):
         return np.r_[y[1], -2 * zeta * omega_0 * y[1] - omega_0**2 * y[0]]
@@ -72,7 +72,7 @@ def harmonic_oscillator(omega_0: float, zeta: float) -> Problem:
 ```
 
 <details>
-``` {.python file=parareal/harmonic_oscillator.py}
+``` {.python title="parareal/harmonic_oscillator.py"}
 from .abstract import (Problem)
 from typing import Callable
 from numpy.typing import NDArray
@@ -144,7 +144,7 @@ $$y = A\quad \underbrace{\exp(-\omega_0\zeta t)}_{\rm dampening}\quad\underbrace
 
 Given an initial condition $q_0 = 1, p_0 = 0$, the solution is computed as
 
-``` {.python #harmonic-oscillator-solution}
+``` {.python title="#harmonic-oscillator-solution"}
 def underdamped_solution(omega_0: float, zeta: float) \
         -> Callable[[NDArray[np.float64]], NDArray[np.float64]]:
     amp   = 1 / np.sqrt(1 - zeta**2)
@@ -165,7 +165,7 @@ It may be convenient to treat our `Vector` operations such that they are only pe
 
 We will be using `functools.partial` and functions `operator.add`, `operator.mul` etc, to create a data structure that describes all the operations that we might do on a `Vector`. Results may be stored for reference in a `hdf5` file, a feature that can also be hidden behind our `Vector` interface.
 
-``` {.python #example-mpi-imports}
+``` {.python title="#example-mpi-imports"}
 import operator
 from functools import partial
 import h5py as h5  # type: ignore
@@ -174,7 +174,7 @@ from abc import (ABC, abstractmethod)
 
 We create a `Vector` class that satisfies the `Vector` concept outlined earlier. We store the operations in terms of unary and binary operators.
 
-``` {.python #vector-expressions}
+``` {.python title="#vector-expressions"}
 class Vector(ABC):
     @abstractmethod
     def reduce(self: Vector) -> np.ndarray:
@@ -195,7 +195,7 @@ class Vector(ABC):
 
 The `Vector` class acts as a base class for the implementation of `BinaryExpr` and `UnaryExpr`, so that we can nest expressions accordingly. To force computation of a `Vector`, we supply the `reduce_expr` function that, in an example of terrible duck-typing, calls the `reduce` method recursively, until an object is reached that doesn't have the `reduce` method.
 
-``` {.python #vector-expressions}
+``` {.python title="#vector-expressions"}
 def reduce_expr(expr: Union[np.ndarray, Vector]) -> np.ndarray:
     while isinstance(expr, Vector):
         expr = expr.reduce()
@@ -205,7 +205,7 @@ def reduce_expr(expr: Union[np.ndarray, Vector]) -> np.ndarray:
 ### HDF5 Vectors
 This means we can also hide variables that are stored in an HDF5 file behind this interface. We often want to store more information than just the state vector. In the case of parareal, we have results from fine integration and coarse integration. In the case of fine integration, what we need to represent is the final state of the integration, but we are also interested in the intermediate steps.
 
-``` {.python #vector-expressions}
+``` {.python title="#vector-expressions"}
 @dataclass
 class H5Snap(Vector):
     path: Path
@@ -225,7 +225,7 @@ class H5Snap(Vector):
 
 To generate slices in a nice manner we can use a helper class:
 
-``` {.python #vector-expressions}
+``` {.python title="#vector-expressions"}
 class Index:
     def __getitem__(self, idx):
         if isinstance(idx, tuple):
@@ -241,7 +241,7 @@ Then `index[a:b,c]` returns a list of slices `[slice(a,b), c]` (type `list[Union
 ### Operators
 There are two classes of operators, unary and binary (more arguments can usually be expressed as a composition of unary and binary forms). We store the arguments together with a function operating on the arguments. The function should be serializable (e.g. using `pickle`), meaning that `lambda` expressions are not allowed, but `partial` applications and functions in `operator` typically are ok.
 
-``` {.python #vector-expressions}
+``` {.python title="#vector-expressions"}
 @dataclass
 class UnaryExpr(Vector):
     func: Callable[[np.ndarray], np.ndarray]
@@ -267,7 +267,7 @@ class BinaryExpr(Vector):
 ### Literal expressions
 To bootstrap our computation we may need to define a `Vector` directly represented by a Numpy array.
 
-``` {.python #vector-expressions}
+``` {.python title="#vector-expressions"}
 @dataclass
 class LiteralExpr(Vector):
     value: np.ndarray
@@ -281,7 +281,7 @@ The API of `parareal` expects us to specify a solver with a function of three ar
 
 The `Coarse` solution is not explicitely archived. We let `dask` handle the propagation of the result to further computations.
 
-``` {.python #example-mpi-coarse}
+``` {.python title="#example-mpi-coarse"}
 @dataclass
 class Coarse:
     n_iter: int
@@ -295,7 +295,7 @@ class Coarse:
 
 For the `fine` integrator however, we want to save the complete result, so that we can retrieve the full history after the computation has finished. So, instead of a `LiteralExpr`, the fine integrator returns a `H5Snap`.
 
-``` {.python #example-mpi-fine}
+``` {.python title="#example-mpi-fine"}
 def generate_filename(name: str, n_iter: int, t0: float, t1: float) -> str:
     return f"{name}-{n_iter:04}-{int(t0*1000):06}-{int(t1*1000):06}.h5"
 
@@ -331,7 +331,7 @@ class Fine:
 ## Keeping track of convergence
 We want to cancel any scheduled computations as soon has we are happy that parareal has converged. This means we need to keep track of the results coming in, and check for convergence. This is done in the `History` class.
 
-``` {.python #example-mpi-history}
+``` {.python title="#example-mpi-history"}
 @dataclass
 class History:
     archive: Path
@@ -355,20 +355,20 @@ class History:
 ### Dask with MPI
 There are two modes in which we may run Dask with MPI. One with a `dask-mpi` running as external scheduler, the other running everything as a single script. For this example we opt for the second, straight from the dask-mpi documentation:
 
-``` {.python #example-mpi-imports}
+``` {.python title="#example-mpi-imports"}
 import dask
 # from dask_mpi import initialize  # type: ignore
 from dask.distributed import Client  # type: ignore
 ```
 
-``` {.python #example-mpi-main}
+``` {.python title="#example-mpi-main"}
 # initialize()
 client = Client(n_workers=4, threads_per_worker=1)
 ```
 
 ## Running the harmonic oscillator
 
-``` {.python #example-mpi-imports}
+``` {.python title="#example-mpi-imports"}
 from parareal.futures import (Parareal)
 
 from parareal.forward_euler import forward_euler
@@ -380,7 +380,7 @@ import math
 
 For reference, we also run the full integrator using just the `Fine` solution.
 
-``` {.python #example-mpi-main}
+``` {.python title="#example-mpi-main"}
 system = harmonic_oscillator(OMEGA0, ZETA)
 y0 = np.array([1.0, 0.0])
 t = np.linspace(0.0, 15.0, 20)
@@ -391,7 +391,7 @@ tabulate(Fine(archive, "fine", 0, system, H).solution, LiteralExpr(y0), t)
 
 ### Running parareal
 
-``` {.python #example-mpi-main}
+``` {.python title="#example-mpi-main"}
 archive = Path("./output/parareal")
 p = Parareal(
     client,
@@ -407,7 +407,7 @@ client.close()
 ## Convergence
 The nice thing about the example with a dampened oscillator, is that we have a parameter by which we can tweak the amount of oscillations. Parareal is notoriously bad at oscillating behaviour, so we should see that reflected in the amount of iterations needed to converge.
 
-![](../lit/img/zeta05.svg)
-![](../lit/img/zeta06.svg)
-![](../lit/img/zeta07.svg)
+![](img/zeta05.svg)
+![](img/zeta06.svg)
+![](img/zeta07.svg)
 

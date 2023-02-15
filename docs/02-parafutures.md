@@ -1,7 +1,7 @@
 # Implementation of Parareal using Futures
 We reimplement Parareal in the `futures` framework of Dask. We have a few helper functions: `identity` to be used as default instance for the mappings between coarse and fine meshes, and `pairs`, a function that iterates through successive pairs of a list.
 
-``` {.python file=parareal/futures.py #parareal-futures}
+``` {.python title="parareal/futures.py"}
 from .abstract import (Solution, Mapping, Vector)
 from typing import (Callable)
 from dataclasses import dataclass
@@ -17,16 +17,18 @@ def identity(x):
 
 def pairs(lst):
     return zip(lst[:-1], lst[1:])
+
+<<parareal-futures>>
 ```
 
 We need to send every operation to a remote worker, that includes summing the vectors from coarse and fine integrators.
 
-``` {.python #parareal-futures}
+``` {.python title="#parareal-futures"}
 def combine(c1: Vector, f1: Vector, c2: Vector) -> Vector:
     return c1 + f1 - c2
 ```
 
-``` {.python #time-windows}
+``` {.python title="#time-windows"}
 def time_windows(times, window_size):
     """Split the times vector in a set of time windows of a given size.
 
@@ -44,7 +46,7 @@ def time_windows(times, window_size):
 
 Every call that actually requires some of the data needs to be sent to the remote worker(s). Where we could get away before with putting everything in a closure, now it is easier to make a class that includes the Dask `Client` instance.
 
-``` {.python #parareal-futures}
+``` {.python title="#parareal-futures"}
 @dataclass
 class Parareal:
     client: Client
@@ -76,7 +78,7 @@ class Parareal:
 
 The `step` method implements the core parareal algorithm.
 
-``` {.python #parareal-methods}
+``` {.python title="#parareal-methods"}
 def step(self, n_iter: int, y_prev: list[Future], t: NDArray[np.float64]) -> list[Future]:
     m = t.size
     y_next = [None] * m
@@ -93,7 +95,7 @@ def step(self, n_iter: int, y_prev: list[Future], t: NDArray[np.float64]) -> lis
 
 We schedule every possible iteration of parareal as a future. The tactic is to cancel remaining jobs only once we found a converging result. This way, workers can compute next iterations, even if the last step of the previous iteration is not yet complete and tested for convergence.
 
-``` {.python #parareal-methods}
+``` {.python title="#parareal-methods"}
 def schedule(self, y_0: Vector, t: NDArray[np.float64]) -> list[list[Future]]:
     # schedule initial coarse integration
     y_init = [self.client.scatter(y_0)]
@@ -110,7 +112,7 @@ def schedule(self, y_0: Vector, t: NDArray[np.float64]) -> list[list[Future]]:
 
 The `wait` method then gathers results and returns the first iteration that satisfies `convergence_test`.
 
-``` {.python #parareal-methods}
+``` {.python title="#parareal-methods"}
 def wait(self, jobs, convergence_test):
     for i in range(len(jobs)):
         result = self.client.gather(jobs[i])
@@ -124,7 +126,7 @@ def wait(self, jobs, convergence_test):
 ## Harmonic oscillator
 We may test this on the harmonic oscillator.
 
-``` {.python file=test/test_futures.py}
+``` {.python title="test/test_futures.py"}
 from dataclasses import dataclass, field
 from functools import partial
 import logging

@@ -1,7 +1,16 @@
 let entangled = https://raw.githubusercontent.com/entangled/entangled/v1.2.2/data/config-schema.dhall
                 sha256:9bb4c5649869175ad0b662d292fd81a3d5d9ccb503b1c7e316d531b7856fb096
 
-in { entangled = entangled.Config :: { watchList = [ "lit/*.md" ] : List Text
+let syntax : entangled.Syntax =
+    { matchCodeStart       = "```[ ]*{[^{}]*}"
+    , matchCodeEnd         = "```"
+    , extractLanguage      = "```[ ]*{\\.([^{} \t]+)[^{}]*}"
+    , extractReferenceName = "```[ ]*{[^{}]*title=\"#([^{}\" \t]*)\"[^{}]*}"
+    , extractFileName      = "```[ ]*{[^{}]*title=\"([^#{}\" \t]*)\"[^{}]*}"
+    , extractProperty      = \(name : Text) -> "```[ ]*{[^{}]*${name}=([^{} \t]*)[^{}]*}" }
+
+in { entangled = entangled.Config :: { watchList = [ "docs/*.md" ] : List Text
+                                     , syntax = syntax
                                      }
    }
 
