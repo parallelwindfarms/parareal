@@ -1,5 +1,5 @@
 # ~\~ language=Python filename=parareal/forward_euler.py
-# ~\~ begin <<lit/01-parareal.md|parareal/forward_euler.py>>[init]
+# ~\~ begin <<docs/01-parareal.md|parareal/forward_euler.py>>[init]
 from .abstract import (Vector, Problem, Solution)
 
 def forward_euler(f: Problem) -> Solution:

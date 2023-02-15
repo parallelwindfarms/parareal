@@ -1,5 +1,5 @@
 # ~\~ language=Python filename=parareal/futures.py
-# ~\~ begin <<lit/02-parafutures.md|parareal-futures>>[init]
+# ~\~ begin <<docs/02-parafutures.md|parareal/futures.py>>[init]
 from .abstract import (Solution, Mapping, Vector)
 from typing import (Callable)
 from dataclasses import dataclass
@@ -15,12 +15,12 @@ def identity(x):
 
 def pairs(lst):
     return zip(lst[:-1], lst[1:])
-# ~\~ end
-# ~\~ begin <<lit/02-parafutures.md|parareal-futures>>[1]
+
+# ~\~ begin <<docs/02-parafutures.md|parareal-futures>>[init]
 def combine(c1: Vector, f1: Vector, c2: Vector) -> Vector:
     return c1 + f1 - c2
 # ~\~ end
-# ~\~ begin <<lit/02-parafutures.md|parareal-futures>>[2]
+# ~\~ begin <<docs/02-parafutures.md|parareal-futures>>[1]
 @dataclass
 class Parareal:
     client: Client
@@ -47,7 +47,7 @@ class Parareal:
         logging.debug("Fine run: %s, %s, %s", y, t0, t1)
         return self.client.submit(self.fine(n_iter), y, t0, t1)
 
-    # ~\~ begin <<lit/02-parafutures.md|parareal-methods>>[init]
+    # ~\~ begin <<docs/02-parafutures.md|parareal-methods>>[init]
     def step(self, n_iter: int, y_prev: list[Future], t: NDArray[np.float64]) -> list[Future]:
         m = t.size
         y_next = [None] * m
@@ -61,7 +61,7 @@ class Parareal:
 
         return y_next
     # ~\~ end
-    # ~\~ begin <<lit/02-parafutures.md|parareal-methods>>[1]
+    # ~\~ begin <<docs/02-parafutures.md|parareal-methods>>[1]
     def schedule(self, y_0: Vector, t: NDArray[np.float64]) -> list[list[Future]]:
         # schedule initial coarse integration
         y_init = [self.client.scatter(y_0)]
@@ -75,7 +75,7 @@ class Parareal:
 
         return jobs
     # ~\~ end
-    # ~\~ begin <<lit/02-parafutures.md|parareal-methods>>[2]
+    # ~\~ begin <<docs/02-parafutures.md|parareal-methods>>[2]
     def wait(self, jobs, convergence_test):
         for i in range(len(jobs)):
             result = self.client.gather(jobs[i])
@@ -85,4 +85,5 @@ class Parareal:
                 return result
         return result
     # ~\~ end
+# ~\~ end
 # ~\~ end
