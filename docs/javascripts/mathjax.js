@@ -3,7 +3,8 @@ window.MathJax = {
     inlineMath: [["\\(", "\\)"]],
     displayMath: [["\\[", "\\]"]],
     processEscapes: true,
-    processEnvironments: true
+    processEnvironments: true,
+    tags: 'ams'
   },
   options: {
     ignoreHtmlClass: ".*|",
@@ -11,8 +12,6 @@ window.MathJax = {
   }
 };
 
-document$.subscribe(() => { 
-
-
-  MathJax.typesetPromise()
+document$.subscribe(() => {
+  MathJax.typesetPromise();
 })

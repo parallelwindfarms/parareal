@@ -1,9 +1,9 @@
 # ~\~ language=Python filename=parareal/abstract.py
-# ~\~ begin <<docs/04-implementation.md|parareal/abstract.py>>[init]
+# ~\~ begin <<docs/01-dho-simple.md|parareal/abstract.py>>[init]
 from __future__ import annotations
 from typing import (Callable, Protocol, TypeVar, Union)
 
-# ~\~ begin <<docs/04-implementation.md|abstract-types>>[init]
+# ~\~ begin <<docs/01-dho-simple.md|abstract-types>>[init]
 TVector = TypeVar("TVector", bound="Vector")
 
 class Vector(Protocol):
@@ -20,13 +20,13 @@ class Vector(Protocol):
         ...
 
 # ~\~ end
-# ~\~ begin <<docs/04-implementation.md|abstract-types>>[1]
+# ~\~ begin <<docs/01-dho-simple.md|abstract-types>>[1]
 Mapping = Callable[[TVector], TVector]
 # ~\~ end
-# ~\~ begin <<docs/04-implementation.md|abstract-types>>[2]
+# ~\~ begin <<docs/01-dho-simple.md|abstract-types>>[2]
 Problem = Callable[[TVector, float], TVector]
 # ~\~ end
-# ~\~ begin <<docs/04-implementation.md|abstract-types>>[3]
+# ~\~ begin <<docs/01-dho-simple.md|abstract-types>>[3]
 Solution = Union[Callable[[TVector, float, float], TVector],
                  Callable[..., TVector]]
 # ~\~ end
