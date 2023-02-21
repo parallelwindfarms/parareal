@@ -37,8 +37,8 @@ is known to lead to a computational advantage under certain circumstances
 [@AUBANEL2011172].
 
 The present work introduces the software solution we developed in order
-to apply the Parareal algorithm to different dynamical problems in a practical way.
-In order to attract an audience as big as possible, we
+to apply the Parareal algorithm to different dynamical problems in a practical way, although with a focus on OpenFOAM[^1] [@openfoam].
+In order to attract an audience as large as possible, we
 decided to write it in Python, an open-source language with a large and
 active users' community. We made it suitable for running on
 supercomputers. And last but not least, we followed not only the
@@ -49,7 +49,7 @@ the testing and documentation.
 # Statement of need
 
 Our motivation for creating this package was the resolution of Computational
-Fluid Dynamics (CFD) problems. In particular, with OpenFOAM[^1] [@openfoam], one of the most popular software suites in the field of CFD.
+Fluid Dynamics (CFD) problems. In particular, with OpenFOAM, one of the most popular software suites in the field of CFD.
 
 CFD is a branch of physics that uses
 computational methods such as numerical analysis to address problems
@@ -104,23 +104,15 @@ back-ends.
 
 ## Input/Output in OpenFOAM
 
-We define a `Vector` as an object that stores the complete state of the
-simulation at any given time. OpenFOAM nativelly stores this information
-as a set of files on a folder structure.
+OpenFOAM nativelly stores this information as a set of files on a folder structure. We dealt with this by defining a `Vector` as an object that stores the complete state of the simulation at any given time, together with a set of operations (sum, subtraction, ...) required by the Parareal algorithm[^3].
 
 OpenFOAM supports two types of direct output. One is an ASCII
 format with a syntax inherited from C. The other is the same ASCII
-format, but with larger data blocks replaced by binary blobs.
-
-We chose to manage IO around the binary file format of OpenFOAM. We
+format, but with larger data blocks replaced by binary blobs. We
 developed a Python module for parsing the ASCII component of these files
 and have efficient memory mapped access to the binary field values
 inside. Our module is general enough to be able to tackle generic
 parsing problems, and we published it independently [@byteparsing2021].
-
-Apart from loading OpenFOAM data into memory, we also need to be able to
-add and subtract vectors. The class `Vector` takes care of all of this
-in a practical manner[^3].
 
 ## More details
 
