@@ -31,9 +31,8 @@ bibliography: paper.bib
 Classical numerical solvers for dynamical systems, such as the
 Runge-Kutta algorithm, are not suitable for parallelization. The reason
 for this is that each integration step fundamentally depends on the
-previous one, making it an inherently serial process. But as we'll see
-below, the Parareal algorithm [@Lions2001] provides a solver
-that allows parallelization in the time domain. The Parareal algorithm
+previous one, making it an inherently serial process. The Parareal algorithm [@Lions2001] provides a solver
+that allows such a parallelization in the time domain. This algorithm
 is known to lead to a computational advantage under certain circumstances
 [@AUBANEL2011172].
 
@@ -50,8 +49,7 @@ the testing and documentation.
 # Statement of need
 
 Our motivation for creating this package was the resolution of Computational
-Fluid Dynamics (CFD) problems, in particular, with OpenFOAM[^1] [@openfoam], one of the most popular software
-suites in the field of CFD.
+Fluid Dynamics (CFD) problems. In particular, with OpenFOAM[^1] [@openfoam], one of the most popular software suites in the field of CFD.
 
 CFD is a branch of physics that uses
 computational methods such as numerical analysis to address problems
@@ -79,9 +77,7 @@ solvers, making it a good team mate for other dynamical systems solvers.
 
 We implemented Parareal in Python and used Dask for orchestrating the
 parallel execution. The Parareal algorithm itself has a straightforward
-implementation. The recursive definition of Parareal
-(see \autoref{eq:parareal} in Appendix) translates into the following Python code for
-a single iteration:
+implementation. The recursive definition of Parareal translates into the following Python code:
 
 ``` {.python language="Python"}
 def parareal(coarse, fine, c2f, f2c):
@@ -106,8 +102,6 @@ By feeding the algorithm Dask delayed functions, a workflow is  <!-- TODO: Consi
 automatically generated for parallel execution on any number of
 back-ends.
 
-See examples in next section.
-
 ## Input/Output in OpenFOAM
 
 We define a `Vector` as an object that stores the complete state of the
@@ -128,18 +122,9 @@ Apart from loading OpenFOAM data into memory, we also need to be able to
 add and subtract vectors. The class `Vector` takes care of all of this
 in a practical manner[^3].
 
-<!-- TODO: consider keeping only one example -->
-## Test problem 1: 2D laminar flow inside a pipe
+## More details
 
-Our first case study will be that of a two-dimensional laminar flow
-inside a pipe. This is the classical textbook example.
-
-## Test problem 2: 2D laminar flow around a cylinder
-
-Our case study will be that of a two-dimensional laminar flow around a
-cylinder. Contrary to the first test problem, the flow around a cylinder
-doesn't converge to a stationary solution if the Reynolds' number is
-high enough.
+We invite the interested reader to take a look at our project documentation ([parallelwindfarms.github.io/parareal](https://parallelwindfarms.github.io/parareal/)), where a number of examples, details and installation instructions can be found.
 
 # Acknowledgements
 This project was supported by funding from the Netherlands eScience Center and NWO as part of the Joint Call for Energy Research, Project Number CSER.JCER.025. We also want to acknowledge Dr. Nicolas Renaud for his support and suggestions.
