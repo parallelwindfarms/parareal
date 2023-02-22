@@ -1,0 +1,862 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+      
+        <link rel="prev" href="..">
+      
+      
+        <link rel="next" href="../02-dho-advanced/">
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.4.2, mkdocs-material-9.0.12">
+    
+    
+      
+        <title>Tutorial: Dampened Harmonic Oscillator - Parareal in Python</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.0d440cfe.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.2505c338.min.css">
+      
+      
+
+    
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce((e,_)=>(e<<5)-e+_.charCodeAt(0),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="pink" data-md-color-accent="">
+  
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&"object"==typeof palette.color)for(var key of Object.keys(palette.color))document.body.setAttribute("data-md-color-"+key,palette.color[key])</script>
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#tutorial-dampened-harmonic-oscillator" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Parareal in Python" class="md-header__button md-logo" aria-label="Parareal in Python" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2Z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Parareal in Python
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Tutorial: Dampened Harmonic Oscillator
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      <form class="md-header__option" data-md-component="palette">
+        
+          
+          <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="pink" data-md-color-accent=""  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_1">
+          
+            <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_2" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69Z"/></svg>
+            </label>
+          
+        
+          
+          <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="pink" data-md-color-accent=""  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_2">
+          
+            <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_1" hidden>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12c0-2.42-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12 20 8.69Z"/></svg>
+            </label>
+          
+        
+      </form>
+    
+    
+    
+      <label class="md-header__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+      </label>
+      <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5Z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12Z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Parareal in Python" class="md-nav__button md-logo" aria-label="Parareal in Python" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54Z"/></svg>
+
+    </a>
+    Parareal in Python
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        About Parareal in Python
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+    
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Tutorial: Dampened Harmonic Oscillator
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        Tutorial: Dampened Harmonic Oscillator
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#glossary" class="md-nav__link">
+    Glossary
+  </a>
+  
+    <nav class="md-nav" aria-label="Glossary">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#vector" class="md-nav__link">
+    Vector
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#problem" class="md-nav__link">
+    Problem
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#solution" class="md-nav__link">
+    Solution
+  </a>
+  
+    <nav class="md-nav" aria-label="Solution">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#example" class="md-nav__link">
+    Example
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#solver" class="md-nav__link">
+    Solver
+  </a>
+  
+    <nav class="md-nav" aria-label="Solver">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#numeric-solution" class="md-nav__link">
+    Numeric solution
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#theory" class="md-nav__link">
+    Theory
+  </a>
+  
+    <nav class="md-nav" aria-label="Theory">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#exact-solution" class="md-nav__link">
+    Exact solution
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#using-parareal" class="md-nav__link">
+    Using Parareal
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../02-dho-advanced/" class="md-nav__link">
+        Tutorial: using HDF5 and MPI and Dask futures
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../03-pipeflow/" class="md-nav__link">
+        03 pipeflow
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../04-implementation/" class="md-nav__link">
+        Implementation
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#glossary" class="md-nav__link">
+    Glossary
+  </a>
+  
+    <nav class="md-nav" aria-label="Glossary">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#vector" class="md-nav__link">
+    Vector
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#problem" class="md-nav__link">
+    Problem
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#solution" class="md-nav__link">
+    Solution
+  </a>
+  
+    <nav class="md-nav" aria-label="Solution">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#example" class="md-nav__link">
+    Example
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#solver" class="md-nav__link">
+    Solver
+  </a>
+  
+    <nav class="md-nav" aria-label="Solver">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#numeric-solution" class="md-nav__link">
+    Numeric solution
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#theory" class="md-nav__link">
+    Theory
+  </a>
+  
+    <nav class="md-nav" aria-label="Theory">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#exact-solution" class="md-nav__link">
+    Exact solution
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#using-parareal" class="md-nav__link">
+    Using Parareal
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="tutorial-dampened-harmonic-oscillator">Tutorial: Dampened Harmonic Oscillator<a class="headerlink" href="#tutorial-dampened-harmonic-oscillator" title="Permanent link">&para;</a></h1>
+<p>The <code>parareal</code> module takes a rather principled approach, where all mathematical concepts are backed by types in Python's nascent static type (annotation) system.</p>
+<h2 id="glossary">Glossary<a class="headerlink" href="#glossary" title="Permanent link">&para;</a></h2>
+<p>We may present the Parareal algorithm in abstract terms, and match those terms with corresponding type definitions in Python.</p>
+<p>We need to define the following:</p>
+<dl>
+<dt>Vector</dt>
+<dd>A <code>Vector</code> is an object that represents the state of a solution at any one time. On this state we need to be able to do addition, subtraction and scalar multiplication, in order to perform the Parareal algorithm.</dd>
+<dt>Solution</dt>
+<dd>A <code>Solution</code> is a function that takes an initial <code>Vector</code>, a time <code>t_0</code> and a time <code>t</code>, returning the state <code>Vector</code> at time <code>t</code>.</dd>
+<dt>Mapping</dt>
+<dd>A <code>Mapping</code> is a function from one state <code>Vector</code> to another, for example a mapping from a coarse to a fine mesh or vice-versa.</dd>
+<dt>Fine Solution</dt>
+<dd>The <em>fine</em> solution is the solution at the desired resolution. If we were not doing parallel-in-time, this would be the integrator to get at the correct result. We may also use the fine solution to find a ground thruth in testing the Parareal solution.</dd>
+<dt>Coarse Solution</dt>
+<dd>The <em>coarse</em> solution is the solution that is fast but less accurate.</dd>
+</dl>
+<div class="highlight"><span class="filename">parareal/abstract.py</span><pre><span></span><code><span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="p">(</span><span class="n">Callable</span><span class="p">,</span> <span class="n">Protocol</span><span class="p">,</span> <span class="n">TypeVar</span><span class="p">,</span> <span class="n">Union</span><span class="p">)</span>
+
+<span class="o">&lt;&lt;</span><span class="n">abstract</span><span class="o">-</span><span class="n">types</span><span class="o">&gt;&gt;</span>
+</code></pre></div>
+<h3 id="vector">Vector<a class="headerlink" href="#vector" title="Permanent link">&para;</a></h3>
+<p>We have an ODE in the form</p>
+<div class="arithmatex">\[y' = f(y, t).\]</div>
+<p>Here <span class="arithmatex">\(y\)</span> can be a scalar value, a vector of values (say a <code>numpy</code> array), or any expression of <em>state</em>. A naive implementation of an ODE integrator would be</p>
+<div class="arithmatex">\[y_{n+1} = y_{n} + \Delta t f(y_{n}, t),\]</div>
+<p>also known as the <em>forward Euler method</em>. We can capture the <em>state</em> <span class="arithmatex">\(y\)</span> in an abstract class we'll call <code>Vector</code>. We chose this name because we expect this objects to share (some of) the arithmetic properties of mathematical vectors. Namely, we want to be able to add, subtract and scale them. The chunk below states this need of a basic arithmetic in the form of abstract methods.</p>
+<div class="highlight"><span class="filename">#abstract-types</span><pre><span></span><code><span class="n">TVector</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;TVector&quot;</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="s2">&quot;Vector&quot;</span><span class="p">)</span>
+
+<span class="k">class</span> <span class="nc">Vector</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__add__</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">TVector</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">TVector</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TVector</span><span class="p">:</span>
+        <span class="o">...</span>
+
+    <span class="k">def</span> <span class="fm">__sub__</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">TVector</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="n">TVector</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TVector</span><span class="p">:</span>
+        <span class="o">...</span>
+
+    <span class="k">def</span> <span class="fm">__mul__</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">TVector</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TVector</span><span class="p">:</span>
+        <span class="o">...</span>
+
+    <span class="k">def</span> <span class="fm">__rmul__</span><span class="p">(</span><span class="bp">self</span><span class="p">:</span> <span class="n">TVector</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">TVector</span><span class="p">:</span>
+        <span class="o">...</span>
+</code></pre></div>
+<p><em>We don't actually need to implement these methods right now. All this is saying, is that any type that has these methods defined can stand in for a <code>Vector</code>.</em></p>
+<p>Note that we don't make a formal distinction here between a state vector and a vector representing a change in state.</p>
+<p>Suppose we have a <code>Vector</code> type <span class="arithmatex">\(T\)</span>, a <code>Mapping</code> is a function <span class="arithmatex">\(T \to T\)</span>:</p>
+<div class="highlight"><span class="filename">#abstract-types</span><pre><span></span><code><span class="n">Mapping</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">TVector</span><span class="p">],</span> <span class="n">TVector</span><span class="p">]</span>
+</code></pre></div>
+<h3 id="problem">Problem<a class="headerlink" href="#problem" title="Permanent link">&para;</a></h3>
+<p>An ODE is then given as a function taking a <code>Vector</code> (the state <span class="arithmatex">\(y\)</span>) and a <code>float</code> (the time <span class="arithmatex">\(t\)</span>) returning a <code>Vector</code> (the derivative <span class="arithmatex">\(y' = f(y,t)\)</span> evaluated at <span class="arithmatex">\((y,t)\)</span>). We define the type <code>Problem</code>:</p>
+<div class="highlight"><span class="filename">#abstract-types</span><pre><span></span><code><span class="n">Problem</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">TVector</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="n">TVector</span><span class="p">]</span>
+</code></pre></div>
+<p>In mathematical notation the snippet above means:</p>
+<div class="arithmatex">\[{\rm Problem} : (y, t) \to f(y, t) = y'\]</div>
+<h3 id="solution">Solution<a class="headerlink" href="#solution" title="Permanent link">&para;</a></h3>
+<p>If we have a <code>Problem</code>, we're after a <code>Solution</code>: a function that, given an initial <code>Vector</code> (the initial condition <span class="arithmatex">\(y_0\)</span>), initial time (<span class="arithmatex">\(t_0\)</span>) and final time (<span class="arithmatex">\(t\)</span>), gives the resulting <code>Vector</code> (the solution, <span class="arithmatex">\(y(t)\)</span> for the given initial conditions).</p>
+<div class="highlight"><span class="filename">#abstract-types</span><pre><span></span><code><span class="n">Solution</span> <span class="o">=</span> <span class="n">Union</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">TVector</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="n">TVector</span><span class="p">],</span>
+                 <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">TVector</span><span class="p">]]</span>
+</code></pre></div>
+<p>Those readers more familiar with classical physics or mathematics may notice that our <code>Problem</code> object corresponds with the function <span class="arithmatex">\(f\)</span>. The <code>Solution</code> object, on the other hand, corresponds with the evolution operator <span class="arithmatex">\(\phi\)</span>:</p>
+<div class="arithmatex">\[{\rm Solution} : (y_0, t_0; t) \to \phi(y_0, t_0; t) = y.\]</div>
+<p>Intuitively, <span class="arithmatex">\(\phi\)</span> represents any method that solves (even approximately) our initial value problem.</p>
+<h4 id="example">Example<a class="headerlink" href="#example" title="Permanent link">&para;</a></h4>
+<p>An example of a <code>Problem</code> would be the function,</p>
+<div class="arithmatex">\[f(y, t) = r y,\]</div>
+<p>in which case the corresponding <code>Solution</code> is,</p>
+<div class="arithmatex">\[\phi(y_0, t_0; t) = y_0 e^{r(t - t_0)}.\]</div>
+<h3 id="solver">Solver<a class="headerlink" href="#solver" title="Permanent link">&para;</a></h3>
+<p>The challenge is, of course, to find a way of transforming a <code>Problem</code> into a <code>Solution</code>. This is what integration algorithms, or <em>solvers</em> do:</p>
+<div class="arithmatex">\[{\rm Solver} : {\rm Problem} \to {\rm Solution}.\]</div>
+<p>If we look a bit closely at the definitions of <code>Problem</code> and <code>Solution</code> we'll notice that a solver is indeed a functional that accepts functions of <span class="arithmatex">\((y,t)\)</span> as an input and returns functions of <span class="arithmatex">\((y_0, t_0, t)\)</span> as an output.</p>
+<p>An example of such a solver is the forward Euler method, that can be implemented as:</p>
+<div class="highlight"><span class="filename">parareal/forward_euler.py</span><pre><span></span><code><span class="kn">from</span> <span class="nn">.abstract</span> <span class="kn">import</span> <span class="p">(</span><span class="n">Vector</span><span class="p">,</span> <span class="n">Problem</span><span class="p">,</span> <span class="n">Solution</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">forward_euler</span><span class="p">(</span><span class="n">f</span><span class="p">:</span> <span class="n">Problem</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Solution</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Forward-Euler solver.&quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="n">y</span><span class="p">:</span> <span class="n">Vector</span><span class="p">,</span> <span class="n">t_0</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">t_1</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Vector</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Stepping function of Euler method.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">y</span> <span class="o">+</span> <span class="p">(</span><span class="n">t_1</span> <span class="o">-</span> <span class="n">t_0</span><span class="p">)</span> <span class="o">*</span> <span class="n">f</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">t_0</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">step</span>
+</code></pre></div>
+<p>Any existing solution can be iterated over to provide a solution over a larger time interval. The <code>iterate_solution</code> function runs a given solution with a step-size fixed to <span class="arithmatex">\(\Delta t = h\)</span>.</p>
+<!--$${\rm Iter}[S, h]\Big|_{t_0, y = y}^{t_1} = \begin{cases}-->
+<!--y & t_0 = t_1 \\-->
+<!--{\rm Iter}[S, h]\big|_{t_0 + h, y = S(y, t_0, t_0 + h)}^{t_1} & {\rm otherwise}-->
+<!--\end{cases}.$$-->
+
+<div class="highlight"><span class="filename">parareal/iterate_solution.py</span><pre><span></span><code><span class="kn">from</span> <span class="nn">.abstract</span> <span class="kn">import</span> <span class="p">(</span><span class="n">Vector</span><span class="p">,</span> <span class="n">Solution</span><span class="p">)</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">math</span>
+
+<span class="k">def</span> <span class="nf">iterate_solution</span><span class="p">(</span><span class="n">step</span><span class="p">:</span> <span class="n">Solution</span><span class="p">,</span> <span class="n">h</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Solution</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">iter_step</span><span class="p">(</span><span class="n">y</span><span class="p">:</span> <span class="n">Vector</span><span class="p">,</span> <span class="n">t_0</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">t_1</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Vector</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Stepping function of iterated solution.&quot;&quot;&quot;</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">((</span><span class="n">t_1</span> <span class="o">-</span> <span class="n">t_0</span><span class="p">)</span> <span class="o">/</span> <span class="n">h</span><span class="p">)</span>
+        <span class="n">steps</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">t_0</span><span class="p">,</span> <span class="n">t_1</span><span class="p">,</span> <span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">t_a</span><span class="p">,</span> <span class="n">t_b</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">steps</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">steps</span><span class="p">[</span><span class="mi">1</span><span class="p">:]):</span>
+            <span class="n">y</span> <span class="o">=</span> <span class="n">step</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">t_a</span><span class="p">,</span> <span class="n">t_b</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">y</span>
+    <span class="k">return</span> <span class="n">iter_step</span>
+</code></pre></div>
+<h4 id="numeric-solution">Numeric solution<a class="headerlink" href="#numeric-solution" title="Permanent link">&para;</a></h4>
+<p>To plot a <code>Solution</code>, we need to tabulate the results for a given sequence of time points.</p>
+<div class="highlight"><span class="filename">parareal/tabulate_solution.py</span><pre><span></span><code><span class="kn">from</span> <span class="nn">.abstract</span> <span class="kn">import</span> <span class="p">(</span><span class="n">Solution</span><span class="p">,</span> <span class="n">Vector</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="p">(</span><span class="n">Sequence</span><span class="p">,</span> <span class="n">Any</span><span class="p">)</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="n">Array</span> <span class="o">=</span> <span class="n">Any</span>
+
+<span class="k">def</span> <span class="nf">tabulate</span><span class="p">(</span><span class="n">step</span><span class="p">:</span> <span class="n">Solution</span><span class="p">,</span> <span class="n">y_0</span><span class="p">:</span> <span class="n">Vector</span><span class="p">,</span> <span class="n">t</span><span class="p">:</span> <span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Vector</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Tabulate the step-wise solution, starting from `y_0`, for every time</span>
+<span class="sd">    point given in array `t`.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">y_0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">tabulate_np</span><span class="p">(</span><span class="n">step</span><span class="p">,</span> <span class="n">y_0</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+
+    <span class="n">y</span> <span class="o">=</span> <span class="p">[</span><span class="n">y_0</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">t</span><span class="o">.</span><span class="n">size</span><span class="p">):</span>
+        <span class="n">y_i</span> <span class="o">=</span> <span class="n">step</span><span class="p">(</span><span class="n">y</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">t</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">t</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+        <span class="n">y</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">y_i</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">y</span>
+
+<span class="o">&lt;&lt;</span><span class="n">tabulate</span><span class="o">-</span><span class="n">np</span><span class="o">&gt;&gt;</span>
+</code></pre></div>
+<details><summary>Numpy specialisation of `tabulate`</summary>
+In the case that the `Vector` type is actually a numpy array, we can specialize the `tabulate` routine to return a larger array.
+
+<div class="highlight"><span class="filename">#tabulate-np</span><pre><span></span><code><span class="k">def</span> <span class="nf">tabulate_np</span><span class="p">(</span><span class="n">step</span><span class="p">:</span> <span class="n">Solution</span><span class="p">,</span> <span class="n">y_0</span><span class="p">:</span> <span class="n">Array</span><span class="p">,</span> <span class="n">t</span><span class="p">:</span> <span class="n">Array</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Array</span><span class="p">:</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="n">y_0</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="n">t</span><span class="o">.</span><span class="n">size</span><span class="p">,)</span> <span class="o">+</span> <span class="n">y_0</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+    <span class="n">y</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">y_0</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">t</span><span class="o">.</span><span class="n">size</span><span class="p">):</span>
+        <span class="n">y</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">step</span><span class="p">(</span><span class="n">y</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">t</span><span class="p">[</span><span class="n">i</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">t</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">y</span>
+</code></pre></div>
+</details>
+
+<h2 id="theory">Theory<a class="headerlink" href="#theory" title="Permanent link">&para;</a></h2>
+<p>The harmonic oscillator can model the movement of a pendulum or the vibration of a mass on a string.</p>
+<div class="arithmatex">\[y'' + 2\zeta \omega_0 y' + \omega_0^2 y = 0,\]</div>
+<p>where <span class="arithmatex">\(\omega_0 = \sqrt{k/m}\)</span> and <span class="arithmatex">\(\zeta = c / 2\sqrt{mk}\)</span>, <span class="arithmatex">\(k\)</span> being the spring constant, <span class="arithmatex">\(m\)</span> the test mass and <span class="arithmatex">\(c\)</span> the friction constant.</p>
+<p>To solve this second order ODE we need to introduce a second variable to solve for. Say <span class="arithmatex">\(q = y\)</span> and <span class="arithmatex">\(p = y'\)</span>.</p>
+<div class="arithmatex">\[\begin{aligned}
+    q' &amp;= p\\
+    p' &amp;= -2\zeta \omega_0 p + \omega_0^2 q
+\end{aligned}\]</div>
+<p>The <code>Problem</code> is then given as</p>
+<div class="highlight"><span class="filename">#harmonic-oscillator-problem</span><pre><span></span><code><span class="k">def</span> <span class="nf">harmonic_oscillator</span><span class="p">(</span><span class="n">omega_0</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">zeta</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Problem</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">t</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">r_</span><span class="p">[</span><span class="n">y</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="o">-</span><span class="mi">2</span> <span class="o">*</span> <span class="n">zeta</span> <span class="o">*</span> <span class="n">omega_0</span> <span class="o">*</span> <span class="n">y</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">omega_0</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">y</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+    <span class="k">return</span> <span class="n">f</span>
+</code></pre></div>
+<details>
+<div class="highlight"><span class="filename">build/harmonic_oscillator.py</span><pre><span></span><code><span class="kn">from</span> <span class="nn">parareal.abstract</span> <span class="kn">import</span> <span class="p">(</span><span class="n">Problem</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span>
+<span class="kn">from</span> <span class="nn">numpy.typing</span> <span class="kn">import</span> <span class="n">NDArray</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="o">&lt;&lt;</span><span class="n">harmonic</span><span class="o">-</span><span class="n">oscillator</span><span class="o">-</span><span class="n">problem</span><span class="o">&gt;&gt;</span>
+<span class="o">&lt;&lt;</span><span class="n">harmonic</span><span class="o">-</span><span class="n">oscillator</span><span class="o">-</span><span class="n">solution</span><span class="o">&gt;&gt;</span>
+
+<span class="k">if</span> <span class="vm">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>  <span class="c1"># type: ignore</span>
+    <span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>  <span class="c1"># type: ignore</span>
+    <span class="kn">from</span> <span class="nn">plotnine</span> <span class="kn">import</span> <span class="n">ggplot</span><span class="p">,</span> <span class="n">geom_line</span><span class="p">,</span> <span class="n">aes</span>  <span class="c1"># type: ignore</span>
+
+    <span class="kn">from</span> <span class="nn">parareal.forward_euler</span> <span class="kn">import</span> <span class="n">forward_euler</span>
+    <span class="kn">from</span> <span class="nn">parareal.iterate_solution</span> <span class="kn">import</span> <span class="n">iterate_solution</span>
+    <span class="kn">from</span> <span class="nn">parareal.tabulate_solution</span> <span class="kn">import</span> <span class="n">tabulate_np</span>
+
+    <span class="n">OMEGA0</span> <span class="o">=</span> <span class="mf">1.0</span>
+    <span class="n">ZETA</span> <span class="o">=</span> <span class="mf">0.5</span>
+    <span class="n">H</span> <span class="o">=</span> <span class="mf">0.001</span>
+    <span class="n">system</span> <span class="o">=</span> <span class="n">harmonic_oscillator</span><span class="p">(</span><span class="n">OMEGA0</span><span class="p">,</span> <span class="n">ZETA</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">coarse</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">t0</span><span class="p">,</span> <span class="n">t1</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">forward_euler</span><span class="p">(</span><span class="n">system</span><span class="p">)(</span><span class="n">y</span><span class="p">,</span> <span class="n">t0</span><span class="p">,</span> <span class="n">t1</span><span class="p">)</span>
+
+    <span class="c1"># fine :: Solution[NDArray]</span>
+    <span class="k">def</span> <span class="nf">fine</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">t0</span><span class="p">,</span> <span class="n">t1</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">iterate_solution</span><span class="p">(</span><span class="n">forward_euler</span><span class="p">(</span><span class="n">system</span><span class="p">),</span> <span class="n">H</span><span class="p">)(</span><span class="n">y</span><span class="p">,</span> <span class="n">t0</span><span class="p">,</span> <span class="n">t1</span><span class="p">)</span>
+
+    <span class="n">y0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">])</span>
+    <span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">15.0</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
+    <span class="n">exact_result</span> <span class="o">=</span> <span class="n">underdamped_solution</span><span class="p">(</span><span class="n">OMEGA0</span><span class="p">,</span> <span class="n">ZETA</span><span class="p">)(</span><span class="n">t</span><span class="p">)</span>
+    <span class="n">euler_result</span> <span class="o">=</span> <span class="n">tabulate_np</span><span class="p">(</span><span class="n">fine</span><span class="p">,</span> <span class="n">y0</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span>
+
+    <span class="n">data</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">({</span>
+        <span class="s2">&quot;time&quot;</span><span class="p">:</span> <span class="n">t</span><span class="p">,</span>
+        <span class="s2">&quot;exact_q&quot;</span><span class="p">:</span> <span class="n">exact_result</span><span class="p">[:,</span><span class="mi">0</span><span class="p">],</span>
+        <span class="s2">&quot;exact_p&quot;</span><span class="p">:</span> <span class="n">exact_result</span><span class="p">[:,</span><span class="mi">1</span><span class="p">],</span>
+        <span class="s2">&quot;euler_q&quot;</span><span class="p">:</span> <span class="n">euler_result</span><span class="p">[:,</span><span class="mi">0</span><span class="p">],</span>
+        <span class="s2">&quot;euler_p&quot;</span><span class="p">:</span> <span class="n">euler_result</span><span class="p">[:,</span><span class="mi">1</span><span class="p">]})</span>
+
+    <span class="n">plot</span> <span class="o">=</span> <span class="n">ggplot</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> \
+        <span class="o">+</span> <span class="n">geom_line</span><span class="p">(</span><span class="n">aes</span><span class="p">(</span><span class="s2">&quot;time&quot;</span><span class="p">,</span> <span class="s2">&quot;exact_q&quot;</span><span class="p">))</span> \
+        <span class="o">+</span> <span class="n">geom_line</span><span class="p">(</span><span class="n">aes</span><span class="p">(</span><span class="s2">&quot;time&quot;</span><span class="p">,</span> <span class="s2">&quot;euler_q&quot;</span><span class="p">),</span> <span class="n">color</span><span class="o">=</span><span class="s2">&quot;#000088&quot;</span><span class="p">)</span>
+    <span class="n">plot</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">&quot;plot.svg&quot;</span><span class="p">)</span>
+</code></pre></div>
+</details>
+
+<h4 id="exact-solution">Exact solution<a class="headerlink" href="#exact-solution" title="Permanent link">&para;</a></h4>
+<p>The damped harmonic oscillator has an exact solution, given the ansatz <span class="arithmatex">\(y = A \exp(z t)\)</span>, we get</p>
+<div class="arithmatex">\[z_{\pm} = \omega_0\left(-\zeta \pm \sqrt{\zeta^2 - 1}\right).\]</div>
+<p>and thus the general solution:</p>
+<div class="arithmatex">\[y(t) = \left\{\begin{array}{lr}
+A \exp(z_+ t) + B \exp(z_- t), &amp; {\rm if}\ \zeta \neq 1\\
+(A + Bt) \exp(-\omega_0 t), &amp; {\rm if}\ \zeta = 1\end{array}
+\right.\]</div>
+<p>This dynamical system has three qualitatively different solutions, each of them depending on the sign of the contents of the square root. Particularly, if the contents of the square root are negative, the two possible values for <span class="arithmatex">\(z\)</span> will be complex numbers, making oscillations possible. More specifically, the three cases are:</p>
+<ul>
+<li><em>overdamped</em> (<span class="arithmatex">\(\zeta &gt; 1\)</span> and, thus, both <span class="arithmatex">\(z\)</span> are real numbers)</li>
+<li><em>critical dampening</em> (<span class="arithmatex">\(\zeta = 1\)</span> and <span class="arithmatex">\(z\)</span> is real and equal to <span class="arithmatex">\(-\omega_0\)</span>)</li>
+<li><em>underdamped</em> (<span class="arithmatex">\(\mid \zeta \mid &lt; 1\)</span>, and <span class="arithmatex">\(z = -\omega_0\zeta \mp i \omega_0 \sqrt{1 - \zeta^2}\)</span>).</li>
+</ul>
+<p>The underdamped case is typically the most interesting one. In this case we have solutions of the form:</p>
+<div class="arithmatex">\[y = A\quad \underbrace{\exp(-\omega_0\zeta t)}_{\rm dampening}\quad\underbrace{\exp(\pm i \omega_0 \sqrt{1 - \zeta^2} t)}_{\rm oscillation},\]</div>
+<p>Given an initial condition <span class="arithmatex">\(q_0 = 1, p_0 = 0\)</span>, the solution is computed as</p>
+<div class="highlight"><span class="filename">#harmonic-oscillator-solution</span><pre><span></span><code><span class="k">def</span> <span class="nf">underdamped_solution</span><span class="p">(</span><span class="n">omega_0</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">zeta</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> \
+        <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">]],</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">]]:</span>
+    <span class="n">amp</span>   <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">zeta</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">phase</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arcsin</span><span class="p">(</span><span class="n">zeta</span><span class="p">)</span>
+    <span class="n">freq</span>  <span class="o">=</span> <span class="n">omega_0</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">zeta</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">f</span><span class="p">(</span><span class="n">t</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">]:</span>
+        <span class="n">dampening</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">omega_0</span><span class="o">*</span><span class="n">zeta</span><span class="o">*</span><span class="n">t</span><span class="p">)</span>
+        <span class="n">q</span> <span class="o">=</span> <span class="n">amp</span> <span class="o">*</span> <span class="n">dampening</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">freq</span> <span class="o">*</span> <span class="n">t</span> <span class="o">-</span> <span class="n">phase</span><span class="p">)</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="o">-</span> <span class="n">amp</span> <span class="o">*</span> <span class="n">omega_0</span> <span class="o">*</span> <span class="n">dampening</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">freq</span> <span class="o">*</span> <span class="n">t</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">c_</span><span class="p">[</span><span class="n">q</span><span class="p">,</span> <span class="n">p</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">f</span>
+</code></pre></div>
+<details><summary>Plot harmonic oscillator</summary>
+<div class="highlight"><span class="filename">build/plot-harmonic-oscillator.py</span><pre><span></span><code><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="p">(</span> <span class="n">Callable</span> <span class="p">)</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pylab</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="kn">from</span> <span class="nn">parareal.abstract</span> <span class="kn">import</span> <span class="p">(</span> <span class="n">Problem</span> <span class="p">)</span>
+<span class="kn">from</span> <span class="nn">parareal.forward_euler</span> <span class="kn">import</span> <span class="p">(</span> <span class="n">forward_euler</span> <span class="p">)</span>
+<span class="kn">from</span> <span class="nn">parareal.tabulate_solution</span> <span class="kn">import</span> <span class="p">(</span> <span class="n">tabulate</span> <span class="p">)</span>
+
+<span class="o">&lt;&lt;</span><span class="n">harmonic</span><span class="o">-</span><span class="n">oscillator</span><span class="o">-</span><span class="n">problem</span><span class="o">&gt;&gt;</span>
+<span class="o">&lt;&lt;</span><span class="n">harmonic</span><span class="o">-</span><span class="n">oscillator</span><span class="o">-</span><span class="n">solution</span><span class="o">&gt;&gt;</span>
+
+<span class="n">omega_0</span> <span class="o">=</span> <span class="mf">1.0</span>
+<span class="n">zeta</span> <span class="o">=</span> <span class="mf">0.5</span>
+<span class="n">f</span> <span class="o">=</span> <span class="n">harmonic_oscillator</span><span class="p">(</span><span class="n">omega_0</span><span class="p">,</span> <span class="n">zeta</span><span class="p">)</span>
+<span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">15.0</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
+<span class="n">y_euler</span> <span class="o">=</span> <span class="n">tabulate</span><span class="p">(</span><span class="n">forward_euler</span><span class="p">(</span><span class="n">f</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">r_</span><span class="p">[</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">],</span> <span class="n">t</span><span class="p">)</span>
+<span class="n">y_exact</span> <span class="o">=</span> <span class="n">underdamped_solution</span><span class="p">(</span><span class="n">omega_0</span><span class="p">,</span> <span class="n">zeta</span><span class="p">)(</span><span class="n">t</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">y_euler</span><span class="p">[:,</span><span class="mi">0</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;slateblue&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;euler&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">y_exact</span><span class="p">[:,</span><span class="mi">0</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;orangered&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;exact&quot;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">y_euler</span><span class="p">[:,</span><span class="mi">1</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;slateblue&#39;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s1">&#39;:&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">y_exact</span><span class="p">[:,</span><span class="mi">1</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;orangered&#39;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s1">&#39;:&#39;</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s2">&quot;harmonic.svg&quot;</span><span class="p">)</span>
+</code></pre></div>
+
+<div class="highlight"><span class="filename">#make-targets</span><pre><span></span><code><span class="nv">targets</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span>harmonic.svg
+
+<span class="nf">harmonic.svg</span><span class="o">:</span><span class="w"> </span><span class="n">plot</span>-<span class="n">harmonic</span>-<span class="n">oscillator</span>.<span class="n">py</span>
+<span class="err">&gt;</span><span class="w"> </span><span class="err">python</span><span class="w"> </span><span class="err">plot-harmonic-oscillator.py</span>
+</code></pre></div>
+</details>
+
+<p>We can compare the results from the numeric integration with the exact solution.</p>
+<p><img alt="" src="../img/harmonic.svg" /></p>
+<h2 id="using-parareal">Using Parareal<a class="headerlink" href="#using-parareal" title="Permanent link">&para;</a></h2>
+<div class="highlight"><span class="filename">examples/dho.py</span><pre><span></span><code>
+</code></pre></div>
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    <script id="__config" type="application/json">{"base": "..", "features": ["content.code.annotate"], "search": "../assets/javascripts/workers/search.db81ec45.min.js", "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.4b2c34cd.min.js"></script>
+      
+        <script src="../javascripts/mathjax.js"></script>
+      
+        <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+      
+        <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS_HTML"></script>
+      
+    
+  </body>
+</html>
