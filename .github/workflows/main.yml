@@ -7,7 +7,7 @@ jobs:
     steps:
     - name: Checkout this
       id: checkout-this
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     - name: Install packages
       id: install-packages
@@ -36,7 +36,7 @@ jobs:
     steps:
     - name: Checkout this
       id: checkout-this
-      uses: actions/checkout@v2
+      uses: actions/checkout@v3
 
     - name: Install packages
       id: install-packages
