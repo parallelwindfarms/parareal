@@ -4,4 +4,3 @@ This package runs the parareal algorithm on a black-box simulator. Parallelisati
 
 # License
 Apache 2, see `LICENSE`.
-
