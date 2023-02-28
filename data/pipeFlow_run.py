@@ -1,10 +1,3 @@
-# Running Parareal with OpenFOAM
-
-To integrate OpenFOAM into this Python workflow, we need an additional module `pylso-foam`. This example assumes some familiarity with OpenFOAM.
-
-We have to create two cases, one for the fine integrator and one for the coarse. Both need a mesh definition in `system/blockMeshDict`, a `system/controlDict` to control the integration, and many more files that you usually copy paste from one of the the tutorials in `$FOAM_TUTORIALS`. For the following, we have two cases located in `pipeFlowFine/baseCase` and `pipeFlowCoarse/baseCase`. The `pipeFlow{Fine|Coarse}` directories will fill up with a lot of runs that are managed by the `pylso-foam` module.
-
-``` {.python title="examples/pipe_flow.py"}
 from pathlib import Path
 from collections.abc import Sequence
 import numpy as np
@@ -107,5 +100,4 @@ init = fine_case.new_vector()
 wf = solve(init, windows[0], 3)
 # wf.visualize("parareal.png")
 wf.compute(n_workers=4)
-```
 

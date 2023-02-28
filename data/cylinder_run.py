@@ -1,10 +1,3 @@
-# Running Parareal with OpenFOAM
-
-To integrate OpenFOAM into this Python workflow, we need an additional module `pylso-foam`. This example assumes some familiarity with OpenFOAM.
-
-We have to create two cases, one for the fine integrator and one for the coarse. Both need a mesh definition in `system/blockMeshDict`, a `system/controlDict` to control the integration, and many more files that you usually copy paste from one of the the tutorials in `$FOAM_TUTORIALS`. For the following, we have two cases located in `pipeFlowFine/baseCase` and `pipeFlowCoarse/baseCase`. The `pipeFlow{Fine|Coarse}` directories will fill up with a lot of runs that are managed by the `pylso-foam` module.
-
-``` {.python title="examples/pipe_flow.py"}
 from pathlib import Path
 from collections.abc import Sequence
 import numpy as np
@@ -19,19 +12,11 @@ from pintFoam.vector import (Vector)
 from pintFoam.foam import (map_fields)
 from pintFoam.utils import (generate_job_name)
 
-fields = ["p", "U"]
-case_name = "pipeFlow"
+fields = ["p", "U", "pMean", "pPrime2Mean", "U_0", "UMean", "UPrime2Mean"]
 
-fine_case = BaseCase(Path(case_name + "Fine"), "baseCase", fields=fields)
-coarse_case = BaseCase(Path(case_name + "Coarse"), "baseCase", fields=fields)
-
-fine_case.clean()
-coarse_case.clean()
-
-block_mesh(fine_case)
-block_mesh(coarse_case)
-
-times = np.linspace(0, 2, 21)
+fine_case = BaseCase(Path("c7_fine"), "baseCase", fields=fields)
+coarse_case = BaseCase(Path("c7_coarse"), "baseCase", fields=fields)
+times = np.linspace(0, 500, 51)
 
 @delayed
 def gather(*args):
@@ -53,20 +38,21 @@ def f2c(x):
     Interpolate the underlying field x from the fine to the coarse grid"""
     return map_fields(x, coarse_case, map_method="interpolate")
 
+
 @delayed
 def fine(n, x, t_0, t_1):
     """Fine integrator."""
     uid = uuid.uuid4()
-    return foam("pimpleFoam", 0.001, x, t_0, t_1,
-                job_name=generate_job_name(n, t_0, t_1, uid, "fine"))
+    return foam("pimpleFoam", 0.1, x, t_0, t_1,
+                job_name=generate_job_name(n, t_0, t_1, uid, "fine", tlength=3))
 
 
 @delayed
 def coarse(n, x, t_0, t_1):
     """Coarse integrator."""
     uid = uuid.uuid4()
-    return foam("pimpleFoam", 0.1, x, t_0, t_1,
-                job_name=generate_job_name(n, t_0, t_1, uid, "coarse"))
+    return foam("pimpleFoam", 1.0, x, t_0, t_1,
+                job_name=generate_job_name(n, t_0, t_1, uid, "coarse", tlength=3))
 
 
 def time_windows(times, window_size):
@@ -101,11 +87,18 @@ def windowed(times, init, window_size):
     return result
 
 
-# print(time_windows(np.arange(40), 11))
-windows = time_windows(times, 10)
-init = fine_case.new_vector()
-wf = solve(init, windows[0], 3)
-# wf.visualize("parareal.png")
-wf.compute(n_workers=4)
-```
+def main():
+    block_mesh(fine_case)
+    block_mesh(coarse_case)
+
+    # print(time_windows(np.arange(40), 11))
+    windows = time_windows(times, 10)
+    init = fine_case.new_vector()
+    wf = solve(init, windows[0], 3)
+    # wf.visualize("parareal.png")
+    wf.compute(n_workers=4)
+
+
+if __name__ == "__main__":
+    main()
 

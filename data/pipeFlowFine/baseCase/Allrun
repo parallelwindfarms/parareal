@@ -1,0 +1,15 @@
+#!/bin/bash
+
+echo "Cleaning the case ..."
+./Allclean
+
+echo "Making log directory for log files ..."
+mkdir log
+
+echo "Running blockMesh ..."
+blockMesh                               > log/log.blockMesh
+
+echo "Running pimpleFoam ..."
+pimpleFoam				> log/log.solve
+
+echo "Done."

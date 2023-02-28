@@ -1,23 +1,18 @@
-# Running Parareal with OpenFOAM
-
-To integrate OpenFOAM into this Python workflow, we need an additional module `pylso-foam`. This example assumes some familiarity with OpenFOAM.
-
-We have to create two cases, one for the fine integrator and one for the coarse. Both need a mesh definition in `system/blockMeshDict`, a `system/controlDict` to control the integration, and many more files that you usually copy paste from one of the the tutorials in `$FOAM_TUTORIALS`. For the following, we have two cases located in `pipeFlowFine/baseCase` and `pipeFlowCoarse/baseCase`. The `pipeFlow{Fine|Coarse}` directories will fill up with a lot of runs that are managed by the `pylso-foam` module.
-
-``` {.python title="examples/pipe_flow.py"}
+# ~\~ language=Python filename=examples/pipe_flow.py
+# ~\~ begin <<docs/03-pipeflow.md|examples/pipe_flow.py>>[init]
 from pathlib import Path
 from collections.abc import Sequence
 import numpy as np
 from math import ceil
 import uuid
 
-from dask import delayed
 from functools import partial
-from pintFoam.parareal import (parareal, tabulate)
-from pintFoam import (BaseCase, foam, block_mesh)
-from pintFoam.vector import (Vector)
-from pintFoam.foam import (map_fields)
-from pintFoam.utils import (generate_job_name)
+from dask.distributed import Client  # type: ignore
+from parareal.futures import Parareal
+
+from pylsoFoam.vector import BaseCase
+from pylsoFoam.foam import block_mesh, foam
+from pylsoFoam.utils import (generate_job_name)
 
 fields = ["p", "U"]
 case_name = "pipeFlow"
@@ -107,5 +102,4 @@ init = fine_case.new_vector()
 wf = solve(init, windows[0], 3)
 # wf.visualize("parareal.png")
 wf.compute(n_workers=4)
-```
-
+# ~\~ end

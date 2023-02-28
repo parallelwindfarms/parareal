@@ -2,6 +2,7 @@
 In this example, we look again at the example of a dampened harmonic oscillator. This time we will go in engineering overkill mode and show how a model can be scaled to a large compute cluster using Dask, MPI and HDF5 as intermediate storage. To avoid confusion and difficult software configuration, we won't use the MPI feature of the HDF5 format. Instead, every job will write its output to its own HDF5 file.
 
 This tutorial covers the following concepts:
+
 * delayed arithmetic expressions
 * defining the coarse and fine integrators
 * using MPI with Dask
