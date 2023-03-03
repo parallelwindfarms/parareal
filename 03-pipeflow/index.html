@@ -19,7 +19,7 @@
     
     
       
-        <title>03 pipeflow - Parareal in Python</title>
+        <title>Running Parareal with OpenFOAM - Parareal in Python</title>
       
     
     
@@ -70,6 +70,11 @@
     <label class="md-overlay" for="__drawer"></label>
     <div data-md-component="skip">
       
+        
+        <a href="#running-parareal-with-openfoam" class="md-skip">
+          Skip to content
+        </a>
+      
     </div>
     <div data-md-component="announce">
       
@@ -99,7 +104,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              03 pipeflow
+              Running Parareal with OpenFOAM
             
           </span>
         </div>
@@ -256,9 +261,11 @@
       <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
       
       
+        
+      
       
       <a href="./" class="md-nav__link md-nav__link--active">
-        03 pipeflow
+        Running Parareal with OpenFOAM
       </a>
       
     </li>
@@ -297,6 +304,8 @@
   
   
   
+    
+  
   
 </nav>
                   </div>
@@ -312,7 +321,112 @@
 
 
 
+<h1 id="running-parareal-with-openfoam">Running Parareal with OpenFOAM<a class="headerlink" href="#running-parareal-with-openfoam" title="Permanent link">&para;</a></h1>
+<p>To integrate OpenFOAM into this Python workflow, we need an additional module <code>pylso-foam</code>. This example assumes some familiarity with OpenFOAM.</p>
+<p>We have to create two cases, one for the fine integrator and one for the coarse. Both need a mesh definition in <code>system/blockMeshDict</code>, a <code>system/controlDict</code> to control the integration, and many more files that you usually copy paste from one of the the tutorials in <code>$FOAM_TUTORIALS</code>. For the following, we have two cases located in <code>pipeFlowFine/baseCase</code> and <code>pipeFlowCoarse/baseCase</code>. The <code>pipeFlow{Fine|Coarse}</code> directories will fill up with a lot of runs that are managed by the <code>pylso-foam</code> module.</p>
+<div class="highlight"><span class="filename">examples/pipe_flow.py</span><pre><span></span><code><span class="kn">from</span> <span class="nn">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+<span class="kn">from</span> <span class="nn">collections.abc</span> <span class="kn">import</span> <span class="n">Sequence</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">math</span> <span class="kn">import</span> <span class="n">ceil</span>
+<span class="kn">import</span> <span class="nn">uuid</span>
 
+<span class="kn">from</span> <span class="nn">dask</span> <span class="kn">import</span> <span class="n">delayed</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
+<span class="kn">from</span> <span class="nn">pintFoam.parareal</span> <span class="kn">import</span> <span class="p">(</span><span class="n">parareal</span><span class="p">,</span> <span class="n">tabulate</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">pintFoam</span> <span class="kn">import</span> <span class="p">(</span><span class="n">BaseCase</span><span class="p">,</span> <span class="n">foam</span><span class="p">,</span> <span class="n">block_mesh</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">pintFoam.vector</span> <span class="kn">import</span> <span class="p">(</span><span class="n">Vector</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">pintFoam.foam</span> <span class="kn">import</span> <span class="p">(</span><span class="n">map_fields</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">pintFoam.utils</span> <span class="kn">import</span> <span class="p">(</span><span class="n">generate_job_name</span><span class="p">)</span>
+
+<span class="n">fields</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;p&quot;</span><span class="p">,</span> <span class="s2">&quot;U&quot;</span><span class="p">]</span>
+<span class="n">case_name</span> <span class="o">=</span> <span class="s2">&quot;pipeFlow&quot;</span>
+
+<span class="n">fine_case</span> <span class="o">=</span> <span class="n">BaseCase</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">case_name</span> <span class="o">+</span> <span class="s2">&quot;Fine&quot;</span><span class="p">),</span> <span class="s2">&quot;baseCase&quot;</span><span class="p">,</span> <span class="n">fields</span><span class="o">=</span><span class="n">fields</span><span class="p">)</span>
+<span class="n">coarse_case</span> <span class="o">=</span> <span class="n">BaseCase</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="n">case_name</span> <span class="o">+</span> <span class="s2">&quot;Coarse&quot;</span><span class="p">),</span> <span class="s2">&quot;baseCase&quot;</span><span class="p">,</span> <span class="n">fields</span><span class="o">=</span><span class="n">fields</span><span class="p">)</span>
+
+<span class="n">fine_case</span><span class="o">.</span><span class="n">clean</span><span class="p">()</span>
+<span class="n">coarse_case</span><span class="o">.</span><span class="n">clean</span><span class="p">()</span>
+
+<span class="n">block_mesh</span><span class="p">(</span><span class="n">fine_case</span><span class="p">)</span>
+<span class="n">block_mesh</span><span class="p">(</span><span class="n">coarse_case</span><span class="p">)</span>
+
+<span class="n">times</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">21</span><span class="p">)</span>
+
+<span class="nd">@delayed</span>
+<span class="k">def</span> <span class="nf">gather</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">):</span>
+    <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+
+
+<span class="nd">@delayed</span>
+<span class="k">def</span> <span class="nf">c2f</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Coarse to fine.</span>
+
+<span class="sd">    Interpolate the underlying field x from the coarse to the fine grid&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">map_fields</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">fine_case</span><span class="p">,</span> <span class="n">map_method</span><span class="o">=</span><span class="s2">&quot;interpolate&quot;</span><span class="p">)</span>
+
+
+<span class="nd">@delayed</span>
+<span class="k">def</span> <span class="nf">f2c</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Fine to coarse.</span>
+
+<span class="sd">    Interpolate the underlying field x from the fine to the coarse grid&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">map_fields</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">coarse_case</span><span class="p">,</span> <span class="n">map_method</span><span class="o">=</span><span class="s2">&quot;interpolate&quot;</span><span class="p">)</span>
+
+<span class="nd">@delayed</span>
+<span class="k">def</span> <span class="nf">fine</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">t_0</span><span class="p">,</span> <span class="n">t_1</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Fine integrator.&quot;&quot;&quot;</span>
+    <span class="n">uid</span> <span class="o">=</span> <span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">foam</span><span class="p">(</span><span class="s2">&quot;pimpleFoam&quot;</span><span class="p">,</span> <span class="mf">0.001</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">t_0</span><span class="p">,</span> <span class="n">t_1</span><span class="p">,</span>
+                <span class="n">job_name</span><span class="o">=</span><span class="n">generate_job_name</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">t_0</span><span class="p">,</span> <span class="n">t_1</span><span class="p">,</span> <span class="n">uid</span><span class="p">,</span> <span class="s2">&quot;fine&quot;</span><span class="p">))</span>
+
+
+<span class="nd">@delayed</span>
+<span class="k">def</span> <span class="nf">coarse</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">t_0</span><span class="p">,</span> <span class="n">t_1</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Coarse integrator.&quot;&quot;&quot;</span>
+    <span class="n">uid</span> <span class="o">=</span> <span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">foam</span><span class="p">(</span><span class="s2">&quot;pimpleFoam&quot;</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">t_0</span><span class="p">,</span> <span class="n">t_1</span><span class="p">,</span>
+                <span class="n">job_name</span><span class="o">=</span><span class="n">generate_job_name</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">t_0</span><span class="p">,</span> <span class="n">t_1</span><span class="p">,</span> <span class="n">uid</span><span class="p">,</span> <span class="s2">&quot;coarse&quot;</span><span class="p">))</span>
+
+
+<span class="k">def</span> <span class="nf">time_windows</span><span class="p">(</span><span class="n">times</span><span class="p">,</span> <span class="n">window_size</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Split the times vector in a set of time windows of a given size.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        times:          The times vector</span>
+<span class="sd">        window_size:    The number of steps per window (note that n steps</span>
+<span class="sd">        correspond to n + 1 elements in the window). The last window may</span>
+<span class="sd">        be smaller.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">n_intervals</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">times</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">ceil</span><span class="p">(</span><span class="n">n_intervals</span> <span class="o">/</span> <span class="n">window_size</span><span class="p">))</span>
+    <span class="n">m</span> <span class="o">=</span> <span class="n">window_size</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">times</span><span class="p">[</span><span class="n">i</span><span class="o">*</span><span class="n">m</span><span class="p">:</span><span class="nb">min</span><span class="p">(</span><span class="n">i</span><span class="o">*</span><span class="n">m</span><span class="o">+</span><span class="n">m</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">times</span><span class="p">))]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">)]</span>
+
+
+<span class="k">def</span> <span class="nf">solve</span><span class="p">(</span><span class="n">init</span><span class="p">:</span> <span class="n">Vector</span><span class="p">,</span> <span class="n">times</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">max_iter</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Vector</span><span class="p">]:</span>
+    <span class="c1"># coarse initial integration from fine initial condition</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="n">c2f</span><span class="p">,</span> <span class="n">tabulate</span><span class="p">(</span><span class="n">partial</span><span class="p">(</span><span class="n">coarse</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">f2c</span><span class="p">(</span><span class="n">init</span><span class="p">),</span> <span class="n">times</span><span class="p">)))</span>
+    <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">max_iter</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">gather</span><span class="p">(</span><span class="o">*</span><span class="n">parareal</span><span class="p">(</span><span class="n">partial</span><span class="p">(</span><span class="n">coarse</span><span class="p">,</span> <span class="n">n</span><span class="p">),</span> <span class="n">partial</span><span class="p">(</span><span class="n">fine</span><span class="p">,</span> <span class="n">n</span><span class="p">),</span> <span class="n">c2f</span><span class="p">,</span> <span class="n">f2c</span><span class="p">)(</span><span class="n">y</span><span class="p">,</span> <span class="n">times</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">y</span>  <span class="c1"># .compute()</span>
+
+
+<span class="k">def</span> <span class="nf">windowed</span><span class="p">(</span><span class="n">times</span><span class="p">,</span> <span class="n">init</span><span class="p">,</span> <span class="n">window_size</span><span class="p">):</span>
+    <span class="n">windows</span> <span class="o">=</span> <span class="n">time_windows</span><span class="p">(</span><span class="n">times</span><span class="p">,</span> <span class="n">window_size</span><span class="p">)</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="p">[</span><span class="n">init</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">windows</span><span class="p">:</span>
+        <span class="n">w_result</span> <span class="o">=</span> <span class="n">solve</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">w</span><span class="p">)</span>
+        <span class="n">result</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">w_result</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">result</span>
+
+
+<span class="c1"># print(time_windows(np.arange(40), 11))</span>
+<span class="n">windows</span> <span class="o">=</span> <span class="n">time_windows</span><span class="p">(</span><span class="n">times</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+<span class="n">init</span> <span class="o">=</span> <span class="n">fine_case</span><span class="o">.</span><span class="n">new_vector</span><span class="p">()</span>
+<span class="n">wf</span> <span class="o">=</span> <span class="n">solve</span><span class="p">(</span><span class="n">init</span><span class="p">,</span> <span class="n">windows</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mi">3</span><span class="p">)</span>
+<span class="c1"># wf.visualize(&quot;parareal.png&quot;)</span>
+<span class="n">wf</span><span class="o">.</span><span class="n">compute</span><span class="p">(</span><span class="n">n_workers</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+</code></pre></div>
 
 
 

@@ -392,7 +392,7 @@
   
     <li class="md-nav__item">
       <a href="../03-pipeflow/" class="md-nav__link">
-        03 pipeflow
+        Running Parareal with OpenFOAM
       </a>
     </li>
   
@@ -559,10 +559,12 @@
 
 <h1 id="tutorial-using-hdf5-and-mpi-and-dask-futures">Tutorial: using HDF5 and MPI and Dask futures<a class="headerlink" href="#tutorial-using-hdf5-and-mpi-and-dask-futures" title="Permanent link">&para;</a></h1>
 <p>In this example, we look again at the example of a dampened harmonic oscillator. This time we will go in engineering overkill mode and show how a model can be scaled to a large compute cluster using Dask, MPI and HDF5 as intermediate storage. To avoid confusion and difficult software configuration, we won't use the MPI feature of the HDF5 format. Instead, every job will write its output to its own HDF5 file.</p>
-<p>This tutorial covers the following concepts:
-* delayed arithmetic expressions
-* defining the coarse and fine integrators
-* using MPI with Dask</p>
+<p>This tutorial covers the following concepts:</p>
+<ul>
+<li>delayed arithmetic expressions</li>
+<li>defining the coarse and fine integrators</li>
+<li>using MPI with Dask</li>
+</ul>
 <h2 id="best-practices">Best practices<a class="headerlink" href="#best-practices" title="Permanent link">&para;</a></h2>
 <p>The following shows some best practices when working with orchestrated computations. One is about using well established data standards, the other about reducing overhead on the distributed scheduler. We can solve both these issues by abstracting over the representation of the state vector in our system. This technique is definitely overkill for our harmonic oscillator example, but it is also in general a good recipe for running Numpy based simulations in an organized manner.</p>
 <div class="highlight"><span class="filename">examples/mpi_futures.py</span><pre><span></span><code><span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">annotations</span>
